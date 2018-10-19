@@ -4,6 +4,9 @@ use winit::{EventsLoop, Event, WindowEvent, MouseScrollDelta, MouseButton, Virtu
 
 use std::path::PathBuf;
 
+/// The main struct of the API.
+/// Call `update_from_vec` or `update` once per main loop.
+/// Then call any of the accessor methods.
 pub struct WinitInputHelper {
     current:      Option<CurrentInput>,
     dropped_file: Option<PathBuf>,
@@ -18,7 +21,6 @@ impl WinitInputHelper {
             quit:         false,
         }
     }
-
 
     /// Pass every event to this function.
     /// `WinitInputHelper::Update` is easier to use.
@@ -270,6 +272,7 @@ pub struct Camera {
     pub pan:  (f32, f32),
 }
 
+/// Stores a character or a backspace.
 /// TODO: Either:
 ///  *   remove this struct and just use backspace character instead
 ///  *   move keypresses like Home, End, Left, Right, Up, Down, Return to this enum
