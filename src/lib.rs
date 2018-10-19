@@ -4,6 +4,282 @@ use winit::{EventsLoop, Event, WindowEvent, MouseScrollDelta, MouseButton, Virtu
 
 use std::path::PathBuf;
 
+pub struct WinitInputHelper {
+    current:      Option<CurrentInput>,
+    dropped_file: Option<PathBuf>,
+    quit:         bool,
+}
+
+impl WinitInputHelper {
+    pub fn new() -> WinitInputHelper {
+        WinitInputHelper {
+            current:      Some(CurrentInput::new()),
+            dropped_file: None,
+            quit:         false,
+        }
+    }
+
+
+    /// Pass every event to this function.
+    /// `WinitInputHelper::Update` is easier to use.
+    /// But this method is useful if you want to inspect the events yourself before giving them to `WinitInputHelper`.
+    /// Ensure this method is only called once per application main loop.
+    /// Ensure every event since the last `update_from_vec` call is included in the `events` argument.
+    pub fn update_from_vec(&mut self, events: Vec<Event>) {
+        self.dropped_file = None;
+        if let Some(ref mut current) = self.current {
+            current.step();
+        }
+
+        for event in events {
+            if let Event::WindowEvent { event, .. } = event {
+                match event {
+                    WindowEvent::CloseRequested |
+                    WindowEvent::Destroyed              => { self.quit = true }
+                    WindowEvent::Focused (false)        => { self.current = None }
+                    WindowEvent::Focused (true)         => { self.current = Some(CurrentInput::new()) }
+                    WindowEvent::DroppedFile (ref path) => { self.dropped_file = Some(path.clone()) }
+                    _ => { }
+                }
+                if let Some(ref mut current) = self.current {
+                    current.handle_event(event);
+                }
+            }
+        }
+    }
+
+    /// Takes every event from the events_loop.
+    /// If you need to inspect the events yourself use `WinitInputHelper::update_from_vec`.
+    /// Ensure this method is only called once per application main loop.
+    pub fn update(&mut self, events_loop: &mut EventsLoop) {
+        let mut events = vec!();
+        events_loop.poll_events(|event| {
+            events.push(event);
+        });
+        self.update_from_vec(events);
+    }
+
+    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed"
+    /// Otherwise returns false
+    pub fn key_pressed(&self, check_key_code: VirtualKeyCode) -> bool {
+        if let Some(ref current) = self.current {
+            for action in &current.key_actions {
+                if let &KeyAction::Pressed(key_code) = action {
+                    if key_code == check_key_code {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true when the specified mouse button goes from "not pressed" to "pressed"
+    /// Otherwise returns false
+    ///
+    /// Left   => 0
+    /// Right  => 1
+    /// Middle => 2
+    /// Other  => 3..255
+    pub fn mouse_pressed(&self, check_mouse_button: usize) -> bool {
+        // TODO: Take MouseButton instead of usize
+        if let Some(ref current) = self.current {
+            for action in &current.mouse_actions {
+                if let &MouseAction::Pressed(key_code) = action {
+                    if key_code == check_mouse_button {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true when the specified keyboard key goes from "pressed" to "not pressed"
+    /// Otherwise returns false
+    pub fn key_released(&self, check_key_code: VirtualKeyCode) -> bool {
+        if let Some(ref current) = self.current {
+            for action in &current.key_actions {
+                if let &KeyAction::Released(key_code) = action {
+                    if key_code == check_key_code {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true when the specified mouse button goes from "pressed" to "not pressed"
+    /// Otherwise returns false
+    ///
+    /// Left   => 0
+    /// Right  => 1
+    /// Middle => 2
+    /// Other  => 3..255
+    pub fn mouse_released(&self, check_mouse_button: usize) -> bool {
+        // TODO: Take MouseButton instead of usize
+        if let Some(ref current) = self.current {
+            for action in &current.mouse_actions {
+                if let &MouseAction::Released(key_code) = action {
+                    if key_code == check_mouse_button {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true while the specified keyboard key remains "pressed"
+    /// Otherwise returns false
+    pub fn key_held(&self, key_code: VirtualKeyCode) -> bool {
+        match self.current {
+            Some (ref current) => current.key_held[key_code as usize],
+            None               => false
+        }
+    }
+
+    /// Returns true while the specified mouse button remains "pressed"
+    /// Otherwise returns false
+    ///
+    /// Left   => 0
+    /// Right  => 1
+    /// Middle => 2
+    /// Other  => 3..255
+    pub fn mouse_held(&self, mouse_button: usize) -> bool {
+        // TODO: Take MouseButton instead of usize
+        match self.current {
+            Some (ref current) => current.mouse_held[mouse_button as usize],
+            None               => false
+        }
+    }
+
+    /// Returns true while any shift key is held on the keyboard
+    /// Otherwise returns false
+    pub fn held_shift(&self) -> bool {
+        return self.key_held(VirtualKeyCode::LShift) || self.key_held(VirtualKeyCode::RShift);
+    }
+
+    /// Returns true while any control key is held on the keyboard
+    /// Otherwise returns false
+    pub fn held_control(&self) -> bool {
+        return self.key_held(VirtualKeyCode::LControl) || self.key_held(VirtualKeyCode::RControl);
+    }
+
+    /// Returns true while any alt key is held on the keyboard
+    /// Otherwise returns false
+    pub fn held_alt(&self) -> bool {
+        return self.key_held(VirtualKeyCode::LAlt) || self.key_held(VirtualKeyCode::RAlt);
+    }
+
+    /// Returns `0.0` if the mouse is outside of the window.
+    /// Otherwise returns the amount scrolled by the mouse in between the last two `update*()` calls
+    pub fn scroll_diff(&self) -> f32 {
+        match self.current {
+            Some(ref current) => current.scroll_diff,
+            None              => 0.0
+        }
+    }
+
+    /// Returns `None` when the mouse is outside of the window.
+    /// Otherwise returns the mouse coordinates in pixels
+    pub fn mouse(&self) -> Option<(f32, f32)> {
+        match self.current {
+            Some(ref current) => current.mouse_point,
+            None              => None
+        }
+    }
+
+    /// Returns `None` when the mouse is outside of the window.
+    /// Otherwise returns the mouse coordinates in the game world.
+    pub fn game_mouse(&self, camera: Camera) -> Option<(f32, f32)> {
+        if let Some(ref current) = self.current {
+            if let Some(point) = current.mouse_point {
+                return Some(current.mouse_to_game(point, &camera));
+            }
+        }
+        None
+    }
+
+    /// Returns the difference in mouse coordinates between the last two `update*()` calls
+    /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
+    pub fn mouse_diff(&self) -> (f32, f32) {
+        if let Some(ref current_input) = self.current {
+            if let Some(cur) = current_input.mouse_point {
+                if let Some(prev) = current_input.mouse_point_prev {
+                    return (cur.0 - prev.0, cur.1 - prev.1);
+                }
+            }
+        }
+        (0.0, 0.0)
+    }
+
+    /// Returns the difference in mouse coordinates between the last two `update*()` calls
+    /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
+    pub fn game_mouse_diff(&self, camera: Camera) -> (f32, f32) {
+        if let Some(ref current_input) = self.current {
+            if let Some(cur) = current_input.mouse_point {
+                if let Some(prev) = current_input.mouse_point_prev {
+                    let cur  = current_input.mouse_to_game(cur, &camera);
+                    let prev = current_input.mouse_to_game(prev, &camera);
+                    return (cur.0 - prev.0, cur.1 - prev.1);
+                }
+            }
+        }
+        (0.0, 0.0)
+    }
+
+    /// Returns `None` when the mouse is outside of the window.
+    /// Otherwise returns the resolution of the window.
+    pub fn resolution(&self) -> Option<(u32, u32)> {
+        match self.current {
+            Some(ref current) => Some(current.resolution),
+            None              => None
+        }
+    }
+
+    /// Returns the characters pressed since the last `update*()`.
+    /// The earlier the character was pressed, the lower the index in the Vec.
+    pub fn text(&self) -> Vec<TextChar> {
+        match self.current {
+            Some(ref current) => current.text.clone(),
+            None              => vec!()
+        }
+    }
+
+    /// Returns the path to a file that has been drag-and-dropped onto the window.
+    pub fn dropped_file(&self) -> Option<PathBuf> {
+        self.dropped_file.clone()
+    }
+
+    /// Returns true if the OS has requested the application to quit.
+    /// Otherwise returns false.
+    pub fn quit(&self) -> bool {
+        self.quit
+    }
+}
+
+/// Specify the camera state, to convert mouse to game coordinates
+/// TODO: Document values required
+/// TODO: Either:
+/// *   generaralize to 3D
+/// *   Create a second API for 3D and document as 2D only
+pub struct Camera {
+    pub zoom: f32,
+    pub pan:  (f32, f32),
+}
+
+/// TODO: Either:
+///  *   remove this struct and just use backspace character instead
+///  *   move keypresses like Home, End, Left, Right, Up, Down, Return to this enum
+///  (advantage of using this struct is it retains sub-frame keypress ordering)
+#[derive(Clone)]
+pub enum TextChar {
+    Char (char),
+    Back,
+}
+
 struct CurrentInput {
     pub mouse_actions:    Vec<MouseAction>,
     pub key_actions:      Vec<KeyAction>,
@@ -15,16 +291,6 @@ struct CurrentInput {
     pub dpi_factor:       f64,
     pub resolution:       (u32, u32),
     pub text:             Vec<TextChar>,
-}
-
-// TODO: Either:
-//  *   remove this struct and just use backspace character instead
-//  *   move keypresses like Home, End, Left, Right, Up, Down, Return to this enum
-//  (advantage of using this struct is it retains sub-frame keypress ordering)
-#[derive(Clone)]
-pub enum TextChar {
-    Char (char),
-    Back,
 }
 
 impl CurrentInput {
@@ -121,221 +387,12 @@ impl CurrentInput {
     }
 }
 
-pub struct WinitInputHelper {
-    current:      Option<CurrentInput>,
-    dropped_file: Option<PathBuf>,
-    quit:         bool,
-}
-
-impl WinitInputHelper {
-    pub fn new() -> WinitInputHelper {
-        WinitInputHelper {
-            current:      Some(CurrentInput::new()),
-            dropped_file: None,
-            quit:         false,
-        }
-    }
-
-
-    /// Pass every event to this function.
-    /// `WinitInputHelper::Update` is easier to use.
-    /// But this method is useful if you want to inspect the events yourself before giving them to `WinitInputHelper`.
-    /// Ensure this method is only called once per application main loop.
-    /// Ensure every event since the last `update_from_vec` call is included in the `events` argument.
-    pub fn update_from_vec(&mut self, events: Vec<Event>) {
-        self.dropped_file = None;
-        if let Some(ref mut current) = self.current {
-            current.step();
-        }
-
-        for event in events {
-            if let Event::WindowEvent { event, .. } = event {
-                match event {
-                    WindowEvent::CloseRequested |
-                    WindowEvent::Destroyed              => { self.quit = true }
-                    WindowEvent::Focused (false)        => { self.current = None }
-                    WindowEvent::Focused (true)         => { self.current = Some(CurrentInput::new()) }
-                    WindowEvent::DroppedFile (ref path) => { self.dropped_file = Some(path.clone()) }
-                    _ => { }
-                }
-                if let Some(ref mut current) = self.current {
-                    current.handle_event(event);
-                }
-            }
-        }
-    }
-
-    /// Takes every event from the events_loop.
-    /// If you need to inspect the events yourself use `WinitInputHelper::update_from_vec`.
-    /// Ensure this method is only called once per application main loop.
-    pub fn update(&mut self, events_loop: &mut EventsLoop) {
-        let mut events = vec!();
-        events_loop.poll_events(|event| {
-            events.push(event);
-        });
-        self.update_from_vec(events);
-    }
-
-    /// off->on
-    pub fn key_pressed(&self, check_key_code: VirtualKeyCode) -> bool {
-        if let Some(ref current) = self.current {
-            for action in &current.key_actions {
-                if let &KeyAction::Pressed(key_code) = action {
-                    if key_code == check_key_code {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// off->on
-    pub fn mouse_pressed(&self, check_mouse_button: usize) -> bool {
-        if let Some(ref current) = self.current {
-            for action in &current.mouse_actions {
-                if let &MouseAction::Pressed(key_code) = action {
-                    if key_code == check_mouse_button {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// on->off
-    pub fn key_released(&self, check_key_code: VirtualKeyCode) -> bool {
-        if let Some(ref current) = self.current {
-            for action in &current.key_actions {
-                if let &KeyAction::Released(key_code) = action {
-                    if key_code == check_key_code {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// on->off
-    pub fn mouse_released(&self, check_mouse_button: usize) -> bool {
-        if let Some(ref current) = self.current {
-            for action in &current.mouse_actions {
-                if let &MouseAction::Released(key_code) = action {
-                    if key_code == check_mouse_button {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// on
-    pub fn key_held(&self, key_code: VirtualKeyCode) -> bool {
-        match self.current {
-            Some (ref current) => current.key_held[key_code as usize],
-            None               => false
-        }
-    }
-
-    /// on
-    pub fn mouse_held(&self, mouse_button: usize) -> bool {
-        match self.current {
-            Some (ref current) => current.mouse_held[mouse_button as usize],
-            None               => false
-        }
-    }
-
-    pub fn held_shift(&self) -> bool {
-        return self.key_held(VirtualKeyCode::LShift) || self.key_held(VirtualKeyCode::RShift);
-    }
-
-    pub fn held_control(&self) -> bool {
-        return self.key_held(VirtualKeyCode::LControl) || self.key_held(VirtualKeyCode::RControl);
-    }
-
-    pub fn held_alt(&self) -> bool {
-        return self.key_held(VirtualKeyCode::LAlt) || self.key_held(VirtualKeyCode::RAlt);
-    }
-
-    pub fn scroll_diff(&self) -> f32 {
-        match self.current {
-            Some(ref current) => current.scroll_diff,
-            None              => 0.0
-        }
-    }
-
-    pub fn mouse(&self) -> Option<(f32, f32)> {
-        match self.current {
-            Some(ref current) => current.mouse_point,
-            None              => None
-        }
-    }
-
-    pub fn game_mouse(&self, camera: Camera) -> Option<(f32, f32)> {
-        if let Some(ref current) = self.current {
-            if let Some(point) = current.mouse_point {
-                return Some(current.mouse_to_game(point, &camera));
-            }
-        }
-        None
-    }
-
-    pub fn mouse_diff(&self) -> (f32, f32) {
-        if let Some(ref current_input) = self.current {
-            if let Some(cur) = current_input.mouse_point {
-                if let Some(prev) = current_input.mouse_point_prev {
-                    return (cur.0 - prev.0, cur.1 - prev.1);
-                }
-            }
-        }
-        (0.0, 0.0)
-    }
-
-    pub fn game_mouse_diff(&self, camera: Camera) -> (f32, f32) {
-        if let Some(ref current_input) = self.current {
-            if let Some(cur) = current_input.mouse_point {
-                if let Some(prev) = current_input.mouse_point_prev {
-                    let cur  = current_input.mouse_to_game(cur, &camera);
-                    let prev = current_input.mouse_to_game(prev, &camera);
-                    return (cur.0 - prev.0, cur.1 - prev.1);
-                }
-            }
-        }
-        (0.0, 0.0)
-    }
-
-    pub fn resolution(&self) -> Option<(u32, u32)> {
-        match self.current {
-            Some(ref current) => Some(current.resolution),
-            None              => None
-        }
-    }
-
-    pub fn text(&self) -> Vec<TextChar> {
-        match self.current {
-            Some(ref current) => current.text.clone(),
-            None              => vec!()
-        }
-    }
-
-    pub fn dropped_file(&self) -> Option<PathBuf> {
-        self.dropped_file.clone()
-    }
-
-    pub fn quit(&self) -> bool {
-        self.quit
-    }
-}
-
-pub enum KeyAction {
+enum KeyAction {
     Pressed  (VirtualKeyCode),
     Released (VirtualKeyCode),
 }
 
-pub enum MouseAction {
+enum MouseAction {
     Pressed (usize),
     Released (usize),
 }
@@ -348,9 +405,3 @@ fn mouse_button_to_int(button: MouseButton) -> usize {
         MouseButton::Other(byte) => byte as usize
     }
 }
-
-pub struct Camera {
-    pub zoom: f32,
-    pub pan:  (f32, f32),
-}
-
