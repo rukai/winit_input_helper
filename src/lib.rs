@@ -1,6 +1,7 @@
 extern crate winit;
 
 use winit::{EventsLoop, Event, WindowEvent, MouseScrollDelta, MouseButton, VirtualKeyCode, ElementState};
+use winit::dpi::LogicalSize;
 
 use std::path::PathBuf;
 
@@ -8,17 +9,19 @@ use std::path::PathBuf;
 /// Call `update_from_vec` or `update` once per main loop.
 /// Then call any of the accessor methods.
 pub struct WinitInputHelper {
-    current:      Option<CurrentInput>,
-    dropped_file: Option<PathBuf>,
-    quit:         bool,
+    current:        Option<CurrentInput>,
+    dropped_file:   Option<PathBuf>,
+    window_resized: Option<LogicalSize>,
+    quit:           bool,
 }
 
 impl WinitInputHelper {
     pub fn new() -> WinitInputHelper {
         WinitInputHelper {
-            current:      Some(CurrentInput::new()),
-            dropped_file: None,
-            quit:         false,
+            current:        Some(CurrentInput::new()),
+            dropped_file:   None,
+            window_resized: None,
+            quit:           false,
         }
     }
 
@@ -29,6 +32,7 @@ impl WinitInputHelper {
     /// Ensure every event since the last `update_from_vec` call is included in the `events` argument.
     pub fn update_from_vec(&mut self, events: Vec<Event>) {
         self.dropped_file = None;
+        self.window_resized = None;
         if let Some(ref mut current) = self.current {
             current.step();
         }
@@ -41,6 +45,7 @@ impl WinitInputHelper {
                     WindowEvent::Focused (false)        => { self.current = None }
                     WindowEvent::Focused (true)         => { self.current = Some(CurrentInput::new()) }
                     WindowEvent::DroppedFile (ref path) => { self.dropped_file = Some(path.clone()) }
+                    WindowEvent::Resized (ref size)     => { self.window_resized = Some(size.clone()) }
                     _ => { }
                 }
                 if let Some(ref mut current) = self.current {
@@ -253,6 +258,12 @@ impl WinitInputHelper {
     /// Returns the path to a file that has been drag-and-dropped onto the window.
     pub fn dropped_file(&self) -> Option<PathBuf> {
         self.dropped_file.clone()
+    }
+
+    /// Returns the current window size if it was resized between the last two `update*()` calls.
+    /// Otherwise returns `None`
+    pub fn window_resized(&self) -> Option<LogicalSize> {
+        self.window_resized.clone()
     }
 
     /// Returns true if the OS has requested the application to quit.
