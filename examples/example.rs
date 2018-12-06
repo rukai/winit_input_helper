@@ -1,6 +1,3 @@
-extern crate winit;
-extern crate winit_input_helper;
-
 use winit::{EventsLoop, VirtualKeyCode};
 use winit_input_helper::WinitInputHelper;
 

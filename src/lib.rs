@@ -1,5 +1,3 @@
-extern crate winit;
-
 use winit::{EventsLoop, Event, WindowEvent, MouseScrollDelta, MouseButton, VirtualKeyCode, ElementState};
 use winit::dpi::LogicalSize;
 
