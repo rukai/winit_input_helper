@@ -368,9 +368,12 @@ impl CurrentInput {
                 self.mouse_actions.push(MouseAction::Released(button));
             }
             WindowEvent::MouseWheel { delta, .. } => {
+                // I just took this from three-rs, no idea why this magic number was chosen ¯\_(ツ)_/¯
+                const PIXELS_PER_LINE: f64 = 38.0;
+
                 match delta {
                     MouseScrollDelta::LineDelta  (_, y) => { self.scroll_diff += y; }
-                    MouseScrollDelta::PixelDelta (_) => panic!("Ooer, I dont know how to handle PixelDelta...") // TODO
+                    MouseScrollDelta::PixelDelta (delta) => { self.scroll_diff += (delta.y / PIXELS_PER_LINE) as f32 }
                 }
             }
             WindowEvent::Resized (resolution) => {
