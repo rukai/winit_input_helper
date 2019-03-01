@@ -10,6 +10,7 @@ pub struct WinitInputHelper {
     current:        Option<CurrentInput>,
     dropped_file:   Option<PathBuf>,
     window_resized: Option<LogicalSize>,
+    hidpi_changed:  Option<f64>,
     quit:           bool,
 }
 
@@ -19,6 +20,7 @@ impl WinitInputHelper {
             current:        Some(CurrentInput::new()),
             dropped_file:   None,
             window_resized: None,
+            hidpi_changed:  None,
             quit:           false,
         }
     }
@@ -39,11 +41,12 @@ impl WinitInputHelper {
             if let Event::WindowEvent { event, .. } = event {
                 match event {
                     WindowEvent::CloseRequested |
-                    WindowEvent::Destroyed              => { self.quit = true }
-                    WindowEvent::Focused (false)        => { self.current = None }
-                    WindowEvent::Focused (true)         => { self.current = Some(CurrentInput::new()) }
-                    WindowEvent::DroppedFile (ref path) => { self.dropped_file = Some(path.clone()) }
-                    WindowEvent::Resized (ref size)     => { self.window_resized = Some(size.clone()) }
+                    WindowEvent::Destroyed                 => { self.quit = true }
+                    WindowEvent::Focused (false)           => { self.current = None }
+                    WindowEvent::Focused (true)            => { self.current = Some(CurrentInput::new()) }
+                    WindowEvent::DroppedFile (ref path)    => { self.dropped_file = Some(path.clone()) }
+                    WindowEvent::Resized (ref size)        => { self.window_resized = Some(size.clone()) }
+                    WindowEvent::HiDpiFactorChanged(hidpi) => { self.hidpi_changed = Some(hidpi) }
                     _ => { }
                 }
                 if let Some(ref mut current) = self.current {
@@ -262,6 +265,12 @@ impl WinitInputHelper {
     /// Otherwise returns `None`
     pub fn window_resized(&self) -> Option<LogicalSize> {
         self.window_resized.clone()
+    }
+
+    /// Returns the current window size if it was resized between the last two `update*()` calls.
+    /// Otherwise returns `None`
+    pub fn hidpi_changed(&self) -> Option<f64> {
+        self.hidpi_changed 
     }
 
     /// Returns true if the OS has requested the application to quit.
