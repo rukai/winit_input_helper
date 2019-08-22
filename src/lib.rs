@@ -1,71 +1,76 @@
-use winit::{EventsLoop, Event, WindowEvent, MouseScrollDelta, MouseButton, VirtualKeyCode, ElementState};
+use winit::event::{Event, WindowEvent, VirtualKeyCode, ElementState, MouseButton, MouseScrollDelta};
 use winit::dpi::LogicalSize;
 
 use std::path::PathBuf;
 
 /// The main struct of the API.
-/// Call `update_from_vec` or `update` once per main loop.
-/// Then call any of the accessor methods.
-pub struct WinitInputHelper {
+///
+/// Create with `WinitInputHelper::new`.
+/// Then call `update` for every `winit::event::Event` you receive from winit.
+/// Then run your application logic when `update` returns true, callng any of the accessor methods you need.
+pub struct WinitInputHelper<T> {
     current:        Option<CurrentInput>,
     dropped_file:   Option<PathBuf>,
     window_resized: Option<LogicalSize>,
     hidpi_changed:  Option<f64>,
     quit:           bool,
+    events:         Vec<Event<T>>,
 }
 
-impl WinitInputHelper {
-    pub fn new() -> WinitInputHelper {
+impl<T> WinitInputHelper<T> {
+    pub fn new() -> WinitInputHelper<T> {
         WinitInputHelper {
             current:        Some(CurrentInput::new()),
             dropped_file:   None,
             window_resized: None,
             hidpi_changed:  None,
             quit:           false,
+            events:         vec!(),
         }
     }
 
-    /// Pass every event to this function.
-    /// `WinitInputHelper::Update` is easier to use.
-    /// But this method is useful if you want to inspect the events yourself before giving them to `WinitInputHelper`.
-    /// Ensure this method is only called once per application main loop.
-    /// Ensure every event since the last `update_from_vec` call is included in the `events` argument.
-    pub fn update_from_vec(&mut self, events: Vec<Event>) {
-        self.dropped_file = None;
-        self.window_resized = None;
-        self.hidpi_changed = None;
-        if let Some(ref mut current) = self.current {
-            current.step();
-        }
-
-        for event in events {
-            if let Event::WindowEvent { event, .. } = event {
-                match event {
-                    WindowEvent::CloseRequested |
-                    WindowEvent::Destroyed                 => { self.quit = true }
-                    WindowEvent::Focused (false)           => { self.current = None }
-                    WindowEvent::Focused (true)            => { self.current = Some(CurrentInput::new()) }
-                    WindowEvent::DroppedFile (ref path)    => { self.dropped_file = Some(path.clone()) }
-                    WindowEvent::Resized (ref size)        => { self.window_resized = Some(size.clone()) }
-                    WindowEvent::HiDpiFactorChanged(hidpi) => { self.hidpi_changed = Some(hidpi) }
-                    _ => { }
-                }
+    /// All passed events are queued until an Event::EventsCleared is received.
+    /// At this point the WinitInputHelper processes all events and updates its state.
+    /// You should run your application logic directly after this occurs.
+    /// You can easily tell when this occurs because this method returns
+    /// true iff the passed event is an `Event::EventsCleared`.
+    pub fn update(&mut self, event: Event<T>) -> bool {
+        match &event {
+            // process and clear the queue
+            Event::EventsCleared => {
+                self.dropped_file = None;
+                self.window_resized = None;
+                self.hidpi_changed = None;
                 if let Some(ref mut current) = self.current {
-                    current.handle_event(event);
+                    current.step();
                 }
+
+                for event in self.events.drain(..) {
+                    if let Event::WindowEvent { event, .. } = event {
+                        match event {
+                            WindowEvent::CloseRequested |
+                            WindowEvent::Destroyed                 => { self.quit = true }
+                            WindowEvent::Focused (false)           => { self.current = None }
+                            WindowEvent::Focused (true)            => { self.current = Some(CurrentInput::new()) }
+                            WindowEvent::DroppedFile (ref path)    => { self.dropped_file = Some(path.clone()) }
+                            WindowEvent::Resized (ref size)        => { self.window_resized = Some(size.clone()) }
+                            WindowEvent::HiDpiFactorChanged (hidpi) => { self.hidpi_changed = Some(hidpi) }
+                            _ => { }
+                        }
+                        if let Some(ref mut current) = self.current {
+                            current.handle_event(event);
+                        }
+                    }
+                }
+
+                true
+            }
+            // add to the queue
+            _ => {
+                self.events.push(event);
+                false
             }
         }
-    }
-
-    /// Takes every event from the events_loop.
-    /// If you need to inspect the events yourself use `WinitInputHelper::update_from_vec`.
-    /// Ensure this method is only called once per application main loop.
-    pub fn update(&mut self, events_loop: &mut EventsLoop) {
-        let mut events = vec!();
-        events_loop.poll_events(|event| {
-            events.push(event);
-        });
-        self.update_from_vec(events);
     }
 
     /// Returns true when the specified keyboard key goes from "not pressed" to "pressed"
@@ -282,6 +287,7 @@ impl WinitInputHelper {
 }
 
 /// Specify the camera state, to convert mouse to game coordinates
+///
 /// TODO: Document values required
 /// TODO: Either:
 /// *   generaralize to 3D
@@ -292,6 +298,7 @@ pub struct Camera {
 }
 
 /// Stores a character or a backspace.
+///
 /// TODO: Either:
 ///  *   remove this struct and just use backspace character instead
 ///  *   move keypresses like Home, End, Left, Right, Up, Down, Return to this enum
