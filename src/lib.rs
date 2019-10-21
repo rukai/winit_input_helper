@@ -205,38 +205,12 @@ impl<T> WinitInputHelper<T> {
         }
     }
 
-    /// Returns `None` when the mouse is outside of the window.
-    /// Otherwise returns the mouse coordinates in the game world.
-    pub fn game_mouse(&self, camera: Camera) -> Option<(f32, f32)> {
-        if let Some(ref current) = self.current {
-            if let Some(point) = current.mouse_point {
-                return Some(current.mouse_to_game(point, &camera));
-            }
-        }
-        None
-    }
-
     /// Returns the difference in mouse coordinates between the last two `update*()` calls
     /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
     pub fn mouse_diff(&self) -> (f32, f32) {
         if let Some(ref current_input) = self.current {
             if let Some(cur) = current_input.mouse_point {
                 if let Some(prev) = current_input.mouse_point_prev {
-                    return (cur.0 - prev.0, cur.1 - prev.1);
-                }
-            }
-        }
-        (0.0, 0.0)
-    }
-
-    /// Returns the difference in mouse coordinates between the last two `update*()` calls
-    /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
-    pub fn game_mouse_diff(&self, camera: Camera) -> (f32, f32) {
-        if let Some(ref current_input) = self.current {
-            if let Some(cur) = current_input.mouse_point {
-                if let Some(prev) = current_input.mouse_point_prev {
-                    let cur  = current_input.mouse_to_game(cur, &camera);
-                    let prev = current_input.mouse_to_game(prev, &camera);
                     return (cur.0 - prev.0, cur.1 - prev.1);
                 }
             }
@@ -284,17 +258,6 @@ impl<T> WinitInputHelper<T> {
     pub fn quit(&self) -> bool {
         self.quit
     }
-}
-
-/// Specify the camera state, to convert mouse to game coordinates
-///
-/// TODO: Document values required
-/// TODO: Either:
-/// *   generaralize to 3D
-/// *   Create a second API for 3D and document as 2D only
-pub struct Camera {
-    pub zoom: f32,
-    pub pan:  (f32, f32),
 }
 
 /// Stores a character or a backspace.
@@ -401,21 +364,6 @@ impl CurrentInput {
             }
             _ => {}
         }
-    }
-
-    /// Convert a mouse point to the corresponding in game point
-    pub fn mouse_to_game(&self, mouse_point: (f32, f32), camera: &Camera) -> (f32, f32) {
-        let (m_x, m_y) = mouse_point;
-        let (w_w, w_h) = self.resolution;
-        let (w_w, w_h) = (w_w as f32, w_h as f32);
-        let aspect_ratio = w_w / w_h;
-
-        let zoom = camera.zoom;
-        let (pan_x, pan_y) = camera.pan;
-
-        let g_x = zoom * ( 2.0 * m_x / w_w - 1.0)                - pan_x;
-        let g_y = zoom * (-2.0 * m_y / w_h + 1.0) / aspect_ratio - pan_y;
-        (g_x, g_y)
     }
 }
 
