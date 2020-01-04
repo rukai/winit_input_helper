@@ -33,11 +33,11 @@ impl<T> WinitInputHelper<T> {
     /// At this point the WinitInputHelper processes all events and updates its state.
     /// You should run your application logic directly after this occurs.
     /// You can easily tell when this occurs because this method returns
-    /// true iff the passed event is an `Event::EventsCleared`.
+    /// true iff the passed event is an `Event::MainEventsCleared`.
     pub fn update(&mut self, event: Event<T>) -> bool {
         match &event {
             // process and clear the queue
-            Event::EventsCleared => {
+            Event::MainEventsCleared => {
                 self.dropped_file = None;
                 self.window_resized = None;
                 self.hidpi_changed = None;
