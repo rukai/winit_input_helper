@@ -10,8 +10,8 @@ fn main() {
     let _window = WindowBuilder::new().build(&event_loop).unwrap();
 
     event_loop.run(move |event, _, control_flow| {
-        // Pass every event to the WindowInputHelper
-        // It will return true when the state has been updated and you should run your application logic
+        // Pass every event to the WindowInputHelper.
+        // It will return true when the last event has been processed and it is time to run your application logic.
         if input.update(event) {
             // query keypresses this update
             if input.key_pressed(VirtualKeyCode::A) {
