@@ -8,6 +8,7 @@ use std::path::PathBuf;
 /// Create with `WinitInputHelper::new`.
 /// Call `update` for every `winit::event::Event` you receive from winit.
 /// Run your application logic when `update` returns true, callng any of the accessor methods you need.
+#[derive(Clone)]
 pub struct WinitInputHelper {
     current:               Option<CurrentInput>,
     dropped_file:          Option<PathBuf>,
@@ -269,6 +270,7 @@ pub enum TextChar {
     Back,
 }
 
+#[derive(Clone)]
 struct CurrentInput {
     pub mouse_actions:    Vec<MouseAction>,
     pub key_actions:      Vec<KeyAction>,
@@ -363,11 +365,13 @@ impl CurrentInput {
     }
 }
 
+#[derive(Clone)]
 enum KeyAction {
     Pressed  (VirtualKeyCode),
     Released (VirtualKeyCode),
 }
 
+#[derive(Clone)]
 enum MouseAction {
     Pressed (usize),
     Released (usize),
