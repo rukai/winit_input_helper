@@ -1,5 +1,7 @@
-use winit::event::{Event, WindowEvent, VirtualKeyCode, ElementState, MouseButton, MouseScrollDelta};
 use winit::dpi::PhysicalSize;
+use winit::event::{
+    ElementState, Event, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent,
+};
 
 use std::path::PathBuf;
 
@@ -10,21 +12,21 @@ use std::path::PathBuf;
 /// Run your application logic when `update` returns true, callng any of the accessor methods you need.
 #[derive(Clone)]
 pub struct WinitInputHelper {
-    current:               Option<CurrentInput>,
-    dropped_file:          Option<PathBuf>,
-    window_resized:        Option<PhysicalSize<u32>>,
-    scale_factor_changed:  Option<f64>,
-    quit:                  bool,
+    current: Option<CurrentInput>,
+    dropped_file: Option<PathBuf>,
+    window_resized: Option<PhysicalSize<u32>>,
+    scale_factor_changed: Option<f64>,
+    quit: bool,
 }
 
 impl WinitInputHelper {
     pub fn new() -> WinitInputHelper {
         WinitInputHelper {
-            current:              Some(CurrentInput::new()),
-            dropped_file:         None,
-            window_resized:       None,
+            current: Some(CurrentInput::new()),
+            dropped_file: None,
+            window_resized: None,
             scale_factor_changed: None,
-            quit:                 false,
+            quit: false,
         }
     }
 
@@ -36,7 +38,7 @@ impl WinitInputHelper {
     /// *   `Event::WindowEvent` updates internal state, this will affect the result of accessor methods immediately.
     pub fn update<T>(&mut self, event: Event<T>) -> bool {
         match &event {
-            Event::NewEvents (_) => {
+            Event::NewEvents(_) => {
                 self.dropped_file = None;
                 self.window_resized = None;
                 self.scale_factor_changed = None;
@@ -46,20 +48,21 @@ impl WinitInputHelper {
 
                 false
             }
-            Event::MainEventsCleared => {
-                true
-            }
+            Event::MainEventsCleared => true,
             _ => {
                 if let Event::WindowEvent { event, .. } = event {
                     match event {
-                        WindowEvent::CloseRequested |
-                        WindowEvent::Destroyed                               => { self.quit = true }
-                        WindowEvent::Focused (false)                         => { self.current = None }
-                        WindowEvent::Focused (true)                          => { self.current = Some(CurrentInput::new()) }
-                        WindowEvent::DroppedFile (ref path)                  => { self.dropped_file = Some(path.clone()) }
-                        WindowEvent::Resized (ref size)                      => { self.window_resized = Some(size.clone()) }
-                        WindowEvent::ScaleFactorChanged { scale_factor, .. } => { self.scale_factor_changed = Some(scale_factor) }
-                        _ => { }
+                        WindowEvent::CloseRequested | WindowEvent::Destroyed => self.quit = true,
+                        WindowEvent::Focused(false) => self.current = None,
+                        WindowEvent::Focused(true) => self.current = Some(CurrentInput::new()),
+                        WindowEvent::DroppedFile(ref path) => {
+                            self.dropped_file = Some(path.clone())
+                        }
+                        WindowEvent::Resized(ref size) => self.window_resized = Some(size.clone()),
+                        WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                            self.scale_factor_changed = Some(scale_factor)
+                        }
+                        _ => {}
                     }
                     if let Some(ref mut current) = self.current {
                         current.handle_event(event);
@@ -147,8 +150,8 @@ impl WinitInputHelper {
     /// Otherwise returns false
     pub fn key_held(&self, key_code: VirtualKeyCode) -> bool {
         match self.current {
-            Some (ref current) => current.key_held[key_code as usize],
-            None               => false
+            Some(ref current) => current.key_held[key_code as usize],
+            None => false,
         }
     }
 
@@ -162,8 +165,8 @@ impl WinitInputHelper {
     pub fn mouse_held(&self, mouse_button: usize) -> bool {
         // TODO: Take MouseButton instead of usize
         match self.current {
-            Some (ref current) => current.mouse_held[mouse_button as usize],
-            None               => false
+            Some(ref current) => current.mouse_held[mouse_button as usize],
+            None => false,
         }
     }
 
@@ -190,7 +193,7 @@ impl WinitInputHelper {
     pub fn scroll_diff(&self) -> f32 {
         match self.current {
             Some(ref current) => current.scroll_diff,
-            None              => 0.0
+            None => 0.0,
         }
     }
 
@@ -199,7 +202,7 @@ impl WinitInputHelper {
     pub fn mouse(&self) -> Option<(f32, f32)> {
         match self.current {
             Some(ref current) => current.mouse_point,
-            None              => None
+            None => None,
         }
     }
 
@@ -221,7 +224,7 @@ impl WinitInputHelper {
     pub fn resolution(&self) -> Option<(u32, u32)> {
         match self.current {
             Some(ref current) => Some(current.resolution),
-            None              => None
+            None => None,
         }
     }
 
@@ -230,7 +233,7 @@ impl WinitInputHelper {
     pub fn text(&self) -> Vec<TextChar> {
         match self.current {
             Some(ref current) => current.text.clone(),
-            None              => vec!()
+            None => vec![],
         }
     }
 
@@ -266,44 +269,44 @@ impl WinitInputHelper {
 ///  (advantage of using this struct is it retains sub-frame keypress ordering)
 #[derive(Clone)]
 pub enum TextChar {
-    Char (char),
+    Char(char),
     Back,
 }
 
 #[derive(Clone)]
 struct CurrentInput {
-    pub mouse_actions:    Vec<MouseAction>,
-    pub key_actions:      Vec<KeyAction>,
-    pub key_held:         [bool; 255],
-    pub mouse_held:       [bool; 255],
-    pub mouse_point:      Option<(f32, f32)>,
+    pub mouse_actions: Vec<MouseAction>,
+    pub key_actions: Vec<KeyAction>,
+    pub key_held: [bool; 255],
+    pub mouse_held: [bool; 255],
+    pub mouse_point: Option<(f32, f32)>,
     pub mouse_point_prev: Option<(f32, f32)>,
-    pub scroll_diff:      f32,
-    pub scale_factor:     f64,
-    pub resolution:       (u32, u32),
-    pub text:             Vec<TextChar>,
+    pub scroll_diff: f32,
+    pub scale_factor: f64,
+    pub resolution: (u32, u32),
+    pub text: Vec<TextChar>,
 }
 
 impl CurrentInput {
     pub fn new() -> CurrentInput {
         CurrentInput {
-            mouse_actions:    vec!(),
-            key_actions:      vec!(),
-            key_held:         [false; 255],
-            mouse_held:       [false; 255],
-            mouse_point:      None,
+            mouse_actions: vec![],
+            key_actions: vec![],
+            key_held: [false; 255],
+            mouse_held: [false; 255],
+            mouse_point: None,
             mouse_point_prev: None,
-            scroll_diff:      0.0,
-            scale_factor:     1.0,
-            resolution:       (1, 1),
-            text:             vec!(),
+            scroll_diff: 0.0,
+            scale_factor: 1.0,
+            resolution: (1, 1),
+            text: vec![],
         }
     }
 
     pub fn step(&mut self) {
-        self.mouse_actions    = vec!();
-        self.key_actions      = vec!();
-        self.scroll_diff      = 0.0;
+        self.mouse_actions = vec![];
+        self.key_actions = vec![];
+        self.scroll_diff = 0.0;
         self.mouse_point_prev = self.mouse_point;
         self.text.clear();
     }
@@ -327,7 +330,7 @@ impl CurrentInput {
                     }
                 }
             }
-            WindowEvent::ReceivedCharacter (c) => {
+            WindowEvent::ReceivedCharacter(c) => {
                 if c != '\x08' && c != '\r' && c != '\n' {
                     self.text.push(TextChar::Char(c));
                 }
@@ -335,12 +338,20 @@ impl CurrentInput {
             WindowEvent::CursorMoved { position, .. } => {
                 self.mouse_point = Some((position.x as f32, position.y as f32));
             }
-            WindowEvent::MouseInput { state: ElementState::Pressed, button, .. } => {
+            WindowEvent::MouseInput {
+                state: ElementState::Pressed,
+                button,
+                ..
+            } => {
                 let button = mouse_button_to_int(button);
                 self.mouse_held[button] = true;
                 self.mouse_actions.push(MouseAction::Pressed(button));
             }
-            WindowEvent::MouseInput { state: ElementState::Released, button, .. } => {
+            WindowEvent::MouseInput {
+                state: ElementState::Released,
+                button,
+                ..
+            } => {
                 let button = mouse_button_to_int(button);
                 self.mouse_held[button] = false;
                 self.mouse_actions.push(MouseAction::Released(button));
@@ -350,11 +361,15 @@ impl CurrentInput {
                 const PIXELS_PER_LINE: f64 = 38.0;
 
                 match delta {
-                    MouseScrollDelta::LineDelta  (_, y) => { self.scroll_diff += y; }
-                    MouseScrollDelta::PixelDelta (delta) => { self.scroll_diff += (delta.y / PIXELS_PER_LINE) as f32 }
+                    MouseScrollDelta::LineDelta(_, y) => {
+                        self.scroll_diff += y;
+                    }
+                    MouseScrollDelta::PixelDelta(delta) => {
+                        self.scroll_diff += (delta.y / PIXELS_PER_LINE) as f32
+                    }
                 }
             }
-            WindowEvent::Resized (resolution) => {
+            WindowEvent::Resized(resolution) => {
                 self.resolution = resolution.into();
             }
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
@@ -367,21 +382,21 @@ impl CurrentInput {
 
 #[derive(Clone)]
 enum KeyAction {
-    Pressed  (VirtualKeyCode),
-    Released (VirtualKeyCode),
+    Pressed(VirtualKeyCode),
+    Released(VirtualKeyCode),
 }
 
 #[derive(Clone)]
 enum MouseAction {
-    Pressed (usize),
-    Released (usize),
+    Pressed(usize),
+    Released(usize),
 }
 
 fn mouse_button_to_int(button: MouseButton) -> usize {
     match button {
-        MouseButton::Left        => 0,
-        MouseButton::Right       => 1,
-        MouseButton::Middle      => 2,
-        MouseButton::Other(byte) => byte as usize
+        MouseButton::Left => 0,
+        MouseButton::Right => 1,
+        MouseButton::Middle => 2,
+        MouseButton::Other(byte) => byte as usize,
     }
 }
