@@ -12,7 +12,7 @@ fn main() {
     event_loop.run(move |event, _, control_flow| {
         // Pass every event to the WindowInputHelper.
         // It will return true when the last event has been processed and it is time to run your application logic.
-        if input.update(event) {
+        if input.update(&event) {
             // query keypresses this update
             if input.key_pressed(VirtualKeyCode::A) {
                 println!("The 'A' key was pressed on the keyboard");
