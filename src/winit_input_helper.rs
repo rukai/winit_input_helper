@@ -7,17 +7,24 @@ use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
 /// The main struct of the API.
 ///
 /// Create with `WinitInputHelper::new`.
-/// Call `update` for every `winit::event::Event` you receive from winit.
-/// Run your application logic when `update` returns true, callng any of the accessor methods you need.
+/// Call `WinitInputHelper::update` for every `winit::event::Event` you receive from winit.
+/// `WinitInputHelper::update` returning true indicates a step has occured.
+/// You should now run your application logic, calling any of the accessor methods you need.
 ///
-/// An alternative API is provided via `step_with_window_events`, call this method instead of `update` if
-/// you need to manually control when a new step begins.
+/// An alternative API is provided via `WinitInputHelper::step_with_window_events`,
+/// call this method instead of `WinitInputHelper::update` if you need to manually control when a new step begins.
+/// A step occurs every time this method is called.
+///
+/// Do not mix usages of `WinitInputHelper::update` and `WinitInputHelper::step_with_window_events`.
+/// You should stick to one or the other.
 #[derive(Clone)]
 pub struct WinitInputHelper {
     current:               Option<CurrentInput>,
     dropped_file:          Option<PathBuf>,
     window_resized:        Option<PhysicalSize<u32>>,
+    window_size:           Option<(u32, u32)>,
     scale_factor_changed:  Option<f64>,
+    scale_factor:          Option<f64>,
     quit:                  bool,
 }
 
@@ -27,7 +34,9 @@ impl WinitInputHelper {
             current:              Some(CurrentInput::new()),
             dropped_file:         None,
             window_resized:       None,
+            window_size:          None,
             scale_factor_changed: None,
+            scale_factor:         None,
             quit:                 false,
         }
     }
@@ -53,10 +62,9 @@ impl WinitInputHelper {
         }
     }
 
-    /// Pass every winit event to this function.
+    /// Pass a slice containing every winit event that occured within the step to this function.
     /// Ensure this method is only called once per application main loop.
-    /// Ensure every event since the last `update_from_vec` call is included in the `events` argument.
-    /// Do not mix with `WinitInputHelper::update`, use one or the other.
+    /// Ensure every event since the last `WinitInputHelper::step_with_window_events` call is included in the `events` argument.
     ///
     /// `WinitInputHelper::Update` is easier to use.
     /// But this method is useful when your application logic steps dont line up with winit's event loop.
@@ -81,12 +89,18 @@ impl WinitInputHelper {
     fn process_window_event(&mut self, event: &WindowEvent) {
         match event {
             WindowEvent::CloseRequested |
-            WindowEvent::Destroyed                               => { self.quit = true }
-            WindowEvent::Focused (false)                         => { self.current = None }
-            WindowEvent::Focused (true)                          => { self.current = Some(CurrentInput::new()) }
-            WindowEvent::DroppedFile (ref path)                  => { self.dropped_file = Some(path.clone()) }
-            WindowEvent::Resized (ref size)                      => { self.window_resized = Some(size.clone()) }
-            WindowEvent::ScaleFactorChanged { scale_factor, .. } => { self.scale_factor_changed = Some(*scale_factor) }
+            WindowEvent::Destroyed              => { self.quit = true }
+            WindowEvent::Focused (false)        => { self.current = None }
+            WindowEvent::Focused (true)         => { self.current = Some(CurrentInput::new()) }
+            WindowEvent::DroppedFile (ref path) => { self.dropped_file = Some(path.clone()) }
+            WindowEvent::Resized (ref size) => {
+                self.window_resized = Some(size.clone());
+                self.window_size = Some(size.clone().into());
+            }
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                self.scale_factor_changed = Some(*scale_factor);
+                self.scale_factor = Some(*scale_factor);
+            }
             _ => { }
         }
         if let Some(ref mut current) = self.current {
@@ -209,7 +223,7 @@ impl WinitInputHelper {
     }
 
     /// Returns `0.0` if the mouse is outside of the window.
-    /// Otherwise returns the amount scrolled by the mouse in between the last two `update*()` calls
+    /// Otherwise returns the amount scrolled by the mouse during the last step.
     pub fn scroll_diff(&self) -> f32 {
         match self.current {
             Some(ref current) => current.scroll_diff,
@@ -226,7 +240,7 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns the difference in mouse coordinates between the last two `update*()` calls
+    /// Returns the change in mouse coordinates that occured during the last step.
     /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
     pub fn mouse_diff(&self) -> (f32, f32) {
         if let Some(ref current_input) = self.current {
@@ -239,16 +253,7 @@ impl WinitInputHelper {
         (0.0, 0.0)
     }
 
-    /// Returns `None` when the mouse is outside of the window.
-    /// Otherwise returns the resolution of the window.
-    pub fn resolution(&self) -> Option<(u32, u32)> {
-        match self.current {
-            Some(ref current) => Some(current.resolution),
-            None              => None
-        }
-    }
-
-    /// Returns the characters pressed since the last `update*()`.
+    /// Returns the characters pressed during the last step.
     /// The earlier the character was pressed, the lower the index in the Vec.
     pub fn text(&self) -> Vec<TextChar> {
         match self.current {
@@ -262,16 +267,28 @@ impl WinitInputHelper {
         self.dropped_file.clone()
     }
 
-    /// Returns the current window size if it was resized between the last two `update*()` calls.
-    /// Otherwise returns `None`
+    /// Returns the current window size if it was resized during the last step.
+    /// Otherwise returns `None`.
     pub fn window_resized(&self) -> Option<PhysicalSize<u32>> {
         self.window_resized.clone()
     }
 
-    /// Returns the current window size if it was resized between the last two `update*()` calls.
-    /// Otherwise returns `None`
+    /// Returns `None` when no `WindowEvent::Resized` have been received yet.
+    /// After one has been received it returns the current resolution of the window.
+    pub fn resolution(&self) -> Option<(u32, u32)> {
+        self.window_size
+    }
+
+    /// Returns the current scale factor if it was changed during the last step.
+    /// Otherwise returns `None`.
     pub fn scale_factor_changed(&self) -> Option<f64> {
         self.scale_factor_changed
+    }
+
+    /// Returns `None` when no `WindowEvent::ScaleFactorChanged` have been received yet.
+    /// After one has been received it returns the current scale_factor of the window.
+    pub fn scale_factor(&self) -> Option<f64> {
+        self.scale_factor
     }
 
     /// Returns true if the OS has requested the application to quit.

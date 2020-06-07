@@ -21,8 +21,6 @@ pub struct CurrentInput {
     pub mouse_point:      Option<(f32, f32)>,
     pub mouse_point_prev: Option<(f32, f32)>,
     pub scroll_diff:      f32,
-    pub scale_factor:     f64,
-    pub resolution:       (u32, u32),
     pub text:             Vec<TextChar>,
 }
 
@@ -36,8 +34,6 @@ impl CurrentInput {
             mouse_point:      None,
             mouse_point_prev: None,
             scroll_diff:      0.0,
-            scale_factor:     1.0,
-            resolution:       (1, 1),
             text:             vec!(),
         }
     }
@@ -96,12 +92,6 @@ impl CurrentInput {
                     MouseScrollDelta::LineDelta  (_, y) => { self.scroll_diff += y; }
                     MouseScrollDelta::PixelDelta (delta) => { self.scroll_diff += (delta.y / PIXELS_PER_LINE) as f32 }
                 }
-            }
-            WindowEvent::Resized (ref resolution) => {
-                self.resolution = resolution.clone().into();
-            }
-            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
-                self.scale_factor = *scale_factor;
             }
             _ => {}
         }
