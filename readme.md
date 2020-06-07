@@ -1,5 +1,5 @@
 # Winit Input Helper
-[![Build Status](https://travis-ci.org/rukai/winit_input_helper.svg?branch=master)](https://travis-ci.org/rukai/winit_input_helper) [![dependency status](https://deps.rs/repo/github/rukai/winit_input_helper/status.svg)](https://deps.rs/repo/github/rukai/winit_input_helper) [![Crates.io](https://img.shields.io/crates/v/winit_input_helper.svg)](https://crates.io/crates/winit_input_helper) [![Docs](https://docs.rs/winit_input_helper/badge.svg)](https://docs.rs/winit_input_helper)
+[![Build Status](https://travis-ci.org/rukai/winit_input_helper.svg?branch=master)](https://travis-ci.org/rukai/winit_input_helper) [![Crates.io](https://img.shields.io/crates/v/winit_input_helper.svg)](https://crates.io/crates/winit_input_helper) [![Docs](https://docs.rs/winit_input_helper/badge.svg)](https://docs.rs/winit_input_helper)
 
 Processes and stores winit events, allowing input state to be queried at any time.
 
@@ -26,7 +26,7 @@ fn main() {
     event_loop.run(move |event, _, control_flow| {
         // Pass every event to the WindowInputHelper.
         // It will return true when the last event has been processed and it is time to run your application logic.
-        if input.update(event) {
+        if input.update(&event) {
             // query keypresses this update
             if input.key_pressed(VirtualKeyCode::A) {
                 println!("The 'A' key was pressed on the keyboard");
