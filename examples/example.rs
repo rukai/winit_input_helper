@@ -28,7 +28,11 @@ fn main() {
             if mouse_diff != (0.0, 0.0) {
                 println!("The mouse diff is: {:?}", mouse_diff);
                 println!("The mouse position is: {:?}", input.mouse());
-            }
+			}
+
+			if let Some(modifiers) = input.modifiers_changed() {
+                println!("Modifiers changed: Ctrl: {}, Alt: {}, Shift: {}", modifiers.ctrl(), modifiers.alt(), modifiers.shift());
+			}
 
             // You are expected to control your own timing within this block.
             // Usually via rendering with vsync.

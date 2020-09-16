@@ -1,4 +1,4 @@
-use winit::event::{Event, WindowEvent, VirtualKeyCode};
+use winit::event::{Event, WindowEvent, VirtualKeyCode, ModifiersState};
 use winit::dpi::PhysicalSize;
 
 use std::path::PathBuf;
@@ -289,6 +289,15 @@ impl WinitInputHelper {
     /// After one has been received it returns the current scale_factor of the window.
     pub fn scale_factor(&self) -> Option<f64> {
         self.scale_factor
+	}
+
+    /// Returns None if `WindowEvent::ModifiersChanged` wasn't received during the last step
+    /// Otherwise return the ModifiersState.
+    pub fn modifiers_changed(&self) -> Option<ModifiersState> {
+        match self.current {
+            Some(ref current) => current.modifiers_changed,
+            None              => None,
+        }
     }
 
     /// Returns true if the OS has requested the application to quit.

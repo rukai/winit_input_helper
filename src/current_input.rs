@@ -1,4 +1,4 @@
-use winit::event::{WindowEvent, VirtualKeyCode, ElementState, MouseButton, MouseScrollDelta};
+use winit::event::{WindowEvent, VirtualKeyCode, ElementState, MouseButton, MouseScrollDelta, ModifiersState};
 
 /// Stores a character or a backspace.
 ///
@@ -14,36 +14,39 @@ pub enum TextChar {
 
 #[derive(Clone)]
 pub struct CurrentInput {
-    pub mouse_actions:    Vec<MouseAction>,
-    pub key_actions:      Vec<KeyAction>,
-    pub key_held:         [bool; 255],
-    pub mouse_held:       [bool; 255],
-    pub mouse_point:      Option<(f32, f32)>,
-    pub mouse_point_prev: Option<(f32, f32)>,
-    pub scroll_diff:      f32,
-    pub text:             Vec<TextChar>,
+    pub mouse_actions:    	Vec<MouseAction>,
+    pub key_actions:      	Vec<KeyAction>,
+    pub key_held:         	[bool; 255],
+    pub mouse_held:       	[bool; 255],
+    pub mouse_point:      	Option<(f32, f32)>,
+    pub mouse_point_prev: 	Option<(f32, f32)>,
+    pub scroll_diff:      	f32,
+	pub text:             	Vec<TextChar>,
+	pub modifiers_changed:	Option<ModifiersState>,
 }
 
 impl CurrentInput {
     pub fn new() -> CurrentInput {
         CurrentInput {
-            mouse_actions:    vec!(),
-            key_actions:      vec!(),
-            key_held:         [false; 255],
-            mouse_held:       [false; 255],
-            mouse_point:      None,
-            mouse_point_prev: None,
-            scroll_diff:      0.0,
-            text:             vec!(),
+            mouse_actions:    	vec!(),
+            key_actions:      	vec!(),
+            key_held:         	[false; 255],
+            mouse_held:       	[false; 255],
+            mouse_point:      	None,
+            mouse_point_prev: 	None,
+            scroll_diff:      	0.0,
+			text:             	vec!(),
+			modifiers_changed:	None,
         }
     }
 
     pub fn step(&mut self) {
-        self.mouse_actions    = vec!();
-        self.key_actions      = vec!();
-        self.scroll_diff      = 0.0;
-        self.mouse_point_prev = self.mouse_point;
-        self.text.clear();
+        self.mouse_actions    	= vec!();
+        self.key_actions      	= vec!();
+        self.scroll_diff      	= 0.0;
+        self.mouse_point_prev 	= self.mouse_point;
+		self.text.clear();
+		self.modifiers_changed	= None;
     }
 
     pub fn handle_event(&mut self, event: &WindowEvent) {
@@ -92,7 +95,10 @@ impl CurrentInput {
                     MouseScrollDelta::LineDelta  (_, y) => { self.scroll_diff += y; }
                     MouseScrollDelta::PixelDelta (delta) => { self.scroll_diff += (delta.y / PIXELS_PER_LINE) as f32 }
                 }
-            }
+			}
+			WindowEvent::ModifiersChanged(new_modifiers) => {
+				self.modifiers_changed = Some(*new_modifiers);
+			}
             _ => {}
         }
     }
