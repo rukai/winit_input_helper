@@ -10,4 +10,4 @@ keywords = ["winit", "input", "helper", "state", "cache"]
 categories = ["game-engines", "os", "gui"]
 
 [dependencies]
-winit = "0.24.0"
+winit = "0.25.0"
