@@ -1,4 +1,6 @@
-use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
+use winit::event::{
+    DeviceEvent, ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent,
+};
 
 /// Stores a character or a backspace.
 ///
@@ -18,8 +20,9 @@ pub struct CurrentInput {
     pub key_actions: Vec<KeyAction>,
     pub key_held: [bool; 255],
     pub mouse_held: [bool; 255],
-    pub mouse_point: Option<(f32, f32)>,
-    pub mouse_point_prev: Option<(f32, f32)>,
+    pub mouse_delta: Option<(f32, f32)>,
+    pub cursor_point: Option<(f32, f32)>,
+    pub cursor_point_prev: Option<(f32, f32)>,
     pub scroll_diff: f32,
     pub text: Vec<TextChar>,
 }
@@ -31,8 +34,9 @@ impl CurrentInput {
             key_actions: vec![],
             key_held: [false; 255],
             mouse_held: [false; 255],
-            mouse_point: None,
-            mouse_point_prev: None,
+            mouse_delta: None,
+            cursor_point: None,
+            cursor_point_prev: None,
             scroll_diff: 0.0,
             text: vec![],
         }
@@ -42,11 +46,12 @@ impl CurrentInput {
         self.mouse_actions = vec![];
         self.key_actions = vec![];
         self.scroll_diff = 0.0;
-        self.mouse_point_prev = self.mouse_point;
+        self.mouse_delta = None;
+        self.cursor_point_prev = self.cursor_point;
         self.text.clear();
     }
 
-    pub fn handle_event(&mut self, event: &WindowEvent) {
+    pub fn handle_window_event(&mut self, event: &WindowEvent) {
         match event {
             WindowEvent::KeyboardInput { input, .. } => {
                 if let Some(keycode) = input.virtual_keycode {
@@ -72,7 +77,7 @@ impl CurrentInput {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                self.mouse_point = Some((position.x as f32, position.y as f32));
+                self.cursor_point = Some((position.x as f32, position.y as f32));
             }
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
@@ -104,6 +109,15 @@ impl CurrentInput {
                         self.scroll_diff += (delta.y / PIXELS_PER_LINE) as f32
                     }
                 }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn handle_device_event(&mut self, event: &DeviceEvent) {
+        match event {
+            DeviceEvent::MouseMotion { delta, .. } => {
+                self.mouse_delta = Some((delta.0 as f32, delta.1 as f32));
             }
             _ => {}
         }

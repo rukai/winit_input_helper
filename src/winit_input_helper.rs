@@ -1,5 +1,5 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{Event, VirtualKeyCode, WindowEvent};
+use winit::event::{DeviceEvent, Event, VirtualKeyCode, WindowEvent};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
 use std::path::PathBuf;
@@ -57,6 +57,10 @@ impl WinitInputHelper {
                 self.process_window_event(event);
                 false
             }
+            Event::DeviceEvent { event, .. } => {
+                self.process_device_event(event);
+                false
+            }
             Event::MainEventsCleared => true,
             _ => false,
         }
@@ -103,7 +107,13 @@ impl WinitInputHelper {
             _ => {}
         }
         if let Some(ref mut current) = self.current {
-            current.handle_event(event);
+            current.handle_window_event(event);
+        }
+    }
+
+    fn process_device_event(&mut self, event: &DeviceEvent) {
+        if let Some(ref mut current) = self.current {
+            current.handle_device_event(event);
         }
     }
 
@@ -234,17 +244,28 @@ impl WinitInputHelper {
     /// Otherwise returns the mouse coordinates in pixels
     pub fn mouse(&self) -> Option<(f32, f32)> {
         match self.current {
-            Some(ref current) => current.mouse_point,
+            Some(ref current) => current.cursor_point,
             None => None,
         }
     }
 
     /// Returns the change in mouse coordinates that occured during the last step.
-    /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
+    /// Returns `(0.0, 0.0)` if the mouse did not move in the last frame.
     pub fn mouse_diff(&self) -> (f32, f32) {
         if let Some(ref current_input) = self.current {
-            if let Some(cur) = current_input.mouse_point {
-                if let Some(prev) = current_input.mouse_point_prev {
+            if let Some(delta) = current_input.mouse_delta {
+                return (delta.0, delta.1);
+            }
+        }
+        (0.0, 0.0)
+    }
+
+    /// Returns the change in cursor coordinates that occured during the last step.
+    /// Returns `(0.0, 0.0)` if the cursor is outside of the window.
+    pub fn cursor_diff(&self) -> (f32, f32) {
+        if let Some(ref current_input) = self.current {
+            if let Some(cur) = current_input.cursor_point {
+                if let Some(prev) = current_input.cursor_point_prev {
                     return (cur.0 - prev.0, cur.1 - prev.1);
                 }
             }
