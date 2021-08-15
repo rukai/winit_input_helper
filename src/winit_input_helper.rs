@@ -1,8 +1,8 @@
-use winit::event::{Event, WindowEvent, VirtualKeyCode};
 use winit::dpi::PhysicalSize;
+use winit::event::{Event, VirtualKeyCode, WindowEvent};
 
-use std::path::PathBuf;
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
+use std::path::PathBuf;
 
 /// The main struct of the API.
 ///
@@ -19,25 +19,25 @@ use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
 /// You should stick to one or the other.
 #[derive(Clone)]
 pub struct WinitInputHelper {
-    current:               Option<CurrentInput>,
-    dropped_file:          Option<PathBuf>,
-    window_resized:        Option<PhysicalSize<u32>>,
-    window_size:           Option<(u32, u32)>,
-    scale_factor_changed:  Option<f64>,
-    scale_factor:          Option<f64>,
-    quit:                  bool,
+    current: Option<CurrentInput>,
+    dropped_file: Option<PathBuf>,
+    window_resized: Option<PhysicalSize<u32>>,
+    window_size: Option<(u32, u32)>,
+    scale_factor_changed: Option<f64>,
+    scale_factor: Option<f64>,
+    quit: bool,
 }
 
 impl WinitInputHelper {
     pub fn new() -> WinitInputHelper {
         WinitInputHelper {
-            current:              Some(CurrentInput::new()),
-            dropped_file:         None,
-            window_resized:       None,
-            window_size:          None,
+            current: Some(CurrentInput::new()),
+            dropped_file: None,
+            window_resized: None,
+            window_size: None,
             scale_factor_changed: None,
-            scale_factor:         None,
-            quit:                 false,
+            scale_factor: None,
+            quit: false,
         }
     }
 
@@ -49,7 +49,7 @@ impl WinitInputHelper {
     /// *   `Event::WindowEvent` updates internal state, this will affect the result of accessor methods immediately.
     pub fn update<T>(&mut self, event: &Event<T>) -> bool {
         match &event {
-            Event::NewEvents (_) => {
+            Event::NewEvents(_) => {
                 self.step();
                 false
             }
@@ -58,7 +58,7 @@ impl WinitInputHelper {
                 false
             }
             Event::MainEventsCleared => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -88,12 +88,11 @@ impl WinitInputHelper {
 
     fn process_window_event(&mut self, event: &WindowEvent) {
         match event {
-            WindowEvent::CloseRequested |
-            WindowEvent::Destroyed              => { self.quit = true }
-            WindowEvent::Focused (false)        => { self.current = None }
-            WindowEvent::Focused (true)         => { self.current = Some(CurrentInput::new()) }
-            WindowEvent::DroppedFile (ref path) => { self.dropped_file = Some(path.clone()) }
-            WindowEvent::Resized (ref size) => {
+            WindowEvent::CloseRequested | WindowEvent::Destroyed => self.quit = true,
+            WindowEvent::Focused(false) => self.current = None,
+            WindowEvent::Focused(true) => self.current = Some(CurrentInput::new()),
+            WindowEvent::DroppedFile(ref path) => self.dropped_file = Some(path.clone()),
+            WindowEvent::Resized(ref size) => {
                 self.window_resized = Some(size.clone());
                 self.window_size = Some(size.clone().into());
             }
@@ -101,7 +100,7 @@ impl WinitInputHelper {
                 self.scale_factor_changed = Some(*scale_factor);
                 self.scale_factor = Some(*scale_factor);
             }
-            _ => { }
+            _ => {}
         }
         if let Some(ref mut current) = self.current {
             current.handle_event(event);
@@ -184,8 +183,8 @@ impl WinitInputHelper {
     /// Otherwise returns false
     pub fn key_held(&self, key_code: VirtualKeyCode) -> bool {
         match self.current {
-            Some (ref current) => current.key_held[key_code as usize],
-            None               => false
+            Some(ref current) => current.key_held[key_code as usize],
+            None => false,
         }
     }
 
@@ -199,8 +198,8 @@ impl WinitInputHelper {
     pub fn mouse_held(&self, mouse_button: usize) -> bool {
         // TODO: Take MouseButton instead of usize
         match self.current {
-            Some (ref current) => current.mouse_held[mouse_button as usize],
-            None               => false
+            Some(ref current) => current.mouse_held[mouse_button as usize],
+            None => false,
         }
     }
 
@@ -227,7 +226,7 @@ impl WinitInputHelper {
     pub fn scroll_diff(&self) -> f32 {
         match self.current {
             Some(ref current) => current.scroll_diff,
-            None              => 0.0
+            None => 0.0,
         }
     }
 
@@ -236,7 +235,7 @@ impl WinitInputHelper {
     pub fn mouse(&self) -> Option<(f32, f32)> {
         match self.current {
             Some(ref current) => current.mouse_point,
-            None              => None
+            None => None,
         }
     }
 
@@ -258,7 +257,7 @@ impl WinitInputHelper {
     pub fn text(&self) -> Vec<TextChar> {
         match self.current {
             Some(ref current) => current.text.clone(),
-            None              => vec!()
+            None => vec![],
         }
     }
 
