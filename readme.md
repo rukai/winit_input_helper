@@ -1,5 +1,6 @@
 # Winit Input Helper
-[![Build Status](https://travis-ci.org/rukai/winit_input_helper.svg?branch=master)](https://travis-ci.org/rukai/winit_input_helper) [![Crates.io](https://img.shields.io/crates/v/winit_input_helper.svg)](https://crates.io/crates/winit_input_helper) [![Docs](https://docs.rs/winit_input_helper/badge.svg)](https://docs.rs/winit_input_helper)
+[![Crates.io](https://img.shields.io/crates/v/winit_input_helper.svg)](https://crates.io/crates/winit_input_helper)
+[![Docs](https://docs.rs/winit_input_helper/badge.svg)](https://docs.rs/winit_input_helper)
 
 Processes and stores winit events, allowing input state to be queried at any time.
 
