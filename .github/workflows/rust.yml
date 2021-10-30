@@ -33,11 +33,19 @@ jobs:
         # However as soon as we use cargo the real version specified in rust-toolchain.toml replaces the stable toolchain.
         #
         # When something like https://github.com/actions-rs/toolchain/pull/184 lands we can delete this line and get a nice speedup
+        profile: minimal
         toolchain: stable
     - uses: Swatinem/rust-cache@v1
+      with:
+        # rust-cache already handles all the sane defaults for caching rust builds.
+        # However because we are running seperate debug/release builds in parallel,
+        # we also need to add Debug or Release to the key so that a seperate cache is used.
+        # Otherwise only the last build to finish would get saved to the cache.
+        key: ${{ matrix.name }}
     - name: Check `cargo fmt` was run
       run: cargo fmt --all -- --check
     - name: Build and test
+      # cargo test alone wont build the examples so we do a seperate cargo build to ensure all the examples build
       run: |
         cargo build ${{ matrix.cargo_profile }} --examples --all
         cargo test ${{ matrix.cargo_profile }}
