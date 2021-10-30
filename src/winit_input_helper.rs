@@ -240,7 +240,7 @@ impl WinitInputHelper {
     }
 
     /// Returns the change in mouse coordinates that occured during the last step.
-    /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
+    /// Returns `(0.0, 0.0)` if the window loses focus.
     pub fn mouse_diff(&self) -> (f32, f32) {
         if let Some(ref current_input) = self.current {
             if let Some(cur) = current_input.mouse_point {
