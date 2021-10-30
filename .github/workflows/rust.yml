@@ -1,4 +1,4 @@
-name: Rust
+name: Testing
 
 on:
   push:
@@ -6,22 +6,38 @@ on:
   pull_request:
     branches: [ master ]
 
+# Cancel already running jobs
+concurrency:
+  group: testing_${{ github.head_ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
+    strategy:
+      matrix:
+        include:
+          - name: Release
+            cargo_profile: --release
+          - name: Debug
+            cargo_profile:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
       with:
+        # `toolchain: stable` results in the latest stable toolchain being installed.
+        # However as soon as we use cargo the real version specified in rust-toolchain.toml replaces the stable toolchain.
+        #
+        # When something like https://github.com/actions-rs/toolchain/pull/184 lands we can delete this line and get a nice speedup
         toolchain: stable
+    - uses: Swatinem/rust-cache@v1
     - name: Check `cargo fmt` was run
       run: cargo fmt --all -- --check
-    - name: Build
+    - name: Build and test
       run: |
-        cargo test
-        cargo test --release
-        cargo build --examples --all
-        cargo build --release --examples --all
+        cargo build ${{ matrix.cargo_profile }} --examples --all
+        cargo test ${{ matrix.cargo_profile }}
