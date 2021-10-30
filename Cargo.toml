@@ -2,7 +2,7 @@
 name = "winit_input_helper"
 repository = "https://github.com/rukai/winit_input_helper"
 version = "0.10.0"
-edition = "2018"
+edition = "2021"
 authors = ["Rukai <rubickent@gmail.com>"]
 license = "MIT"
 description = "Processes winit events, allowing input state to be queried at any time."
