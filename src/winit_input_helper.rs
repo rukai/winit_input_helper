@@ -28,6 +28,12 @@ pub struct WinitInputHelper {
     quit: bool,
 }
 
+impl Default for WinitInputHelper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WinitInputHelper {
     pub fn new() -> WinitInputHelper {
         WinitInputHelper {
@@ -93,8 +99,8 @@ impl WinitInputHelper {
             WindowEvent::Focused(true) => self.current = Some(CurrentInput::new()),
             WindowEvent::DroppedFile(ref path) => self.dropped_file = Some(path.clone()),
             WindowEvent::Resized(ref size) => {
-                self.window_resized = Some(size.clone());
-                self.window_size = Some(size.clone().into());
+                self.window_resized = Some(*size);
+                self.window_size = Some((*size).into());
             }
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
                 self.scale_factor_changed = Some(*scale_factor);
@@ -112,7 +118,7 @@ impl WinitInputHelper {
     pub fn key_pressed(&self, check_key_code: VirtualKeyCode) -> bool {
         if let Some(ref current) = self.current {
             for action in &current.key_actions {
-                if let &KeyAction::Pressed(key_code) = action {
+                if let KeyAction::Pressed(key_code) = *action {
                     if key_code == check_key_code {
                         return true;
                     }
@@ -133,7 +139,7 @@ impl WinitInputHelper {
         // TODO: Take MouseButton instead of usize
         if let Some(ref current) = self.current {
             for action in &current.mouse_actions {
-                if let &MouseAction::Pressed(key_code) = action {
+                if let MouseAction::Pressed(key_code) = *action {
                     if key_code == check_mouse_button {
                         return true;
                     }
@@ -148,7 +154,7 @@ impl WinitInputHelper {
     pub fn key_released(&self, check_key_code: VirtualKeyCode) -> bool {
         if let Some(ref current) = self.current {
             for action in &current.key_actions {
-                if let &KeyAction::Released(key_code) = action {
+                if let KeyAction::Released(key_code) = *action {
                     if key_code == check_key_code {
                         return true;
                     }
@@ -169,7 +175,7 @@ impl WinitInputHelper {
         // TODO: Take MouseButton instead of usize
         if let Some(ref current) = self.current {
             for action in &current.mouse_actions {
-                if let &MouseAction::Released(key_code) = action {
+                if let MouseAction::Released(key_code) = *action {
                     if key_code == check_mouse_button {
                         return true;
                     }
@@ -206,19 +212,19 @@ impl WinitInputHelper {
     /// Returns true while any shift key is held on the keyboard
     /// Otherwise returns false
     pub fn held_shift(&self) -> bool {
-        return self.key_held(VirtualKeyCode::LShift) || self.key_held(VirtualKeyCode::RShift);
+        self.key_held(VirtualKeyCode::LShift) || self.key_held(VirtualKeyCode::RShift)
     }
 
     /// Returns true while any control key is held on the keyboard
     /// Otherwise returns false
     pub fn held_control(&self) -> bool {
-        return self.key_held(VirtualKeyCode::LControl) || self.key_held(VirtualKeyCode::RControl);
+        self.key_held(VirtualKeyCode::LControl) || self.key_held(VirtualKeyCode::RControl)
     }
 
     /// Returns true while any alt key is held on the keyboard
     /// Otherwise returns false
     pub fn held_alt(&self) -> bool {
-        return self.key_held(VirtualKeyCode::LAlt) || self.key_held(VirtualKeyCode::RAlt);
+        self.key_held(VirtualKeyCode::LAlt) || self.key_held(VirtualKeyCode::RAlt)
     }
 
     /// Returns `0.0` if the mouse is outside of the window.
@@ -269,7 +275,7 @@ impl WinitInputHelper {
     /// Returns the current window size if it was resized during the last step.
     /// Otherwise returns `None`.
     pub fn window_resized(&self) -> Option<PhysicalSize<u32>> {
-        self.window_resized.clone()
+        self.window_resized
     }
 
     /// Returns `None` when no `WindowEvent::Resized` have been received yet.
