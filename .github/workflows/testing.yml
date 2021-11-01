@@ -48,10 +48,10 @@ jobs:
       run: cargo fmt --all -- --check
     # If your library does not support running under every possible combination of features,
     # consider using cargo `hack --each-feature` or some other combination of arguments as described at https://github.com/taiki-e/cargo-hack
-    - name: Ensure that the library and all examples compile and have no warnings under every possible combination of features in {{ matrix.cargo_profile }} profile
+    - name: Ensure that the library and all examples compile and have no warnings under every possible combination of features
       # some things to explicitly point out:
       # * clippy also reports rustc warnings and errors
       # * clippy --all-targets causes clippy to run against tests and examples which it doesnt do by default.
       run: cargo hack --feature-powerset clippy --all-targets --locked ${{ matrix.cargo_profile }} -- -D warnings
-    - name: Ensure that tests pass under every possible combination of features in ${{ matrix.cargo_profile }} profile
-      run: cargo test ${{ matrix.cargo_profile }}
+    - name: Ensure that tests pass under every possible combination of features
+      run: cargo hack --feature-powerset test ${{ matrix.cargo_profile }}
