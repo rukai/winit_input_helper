@@ -74,7 +74,7 @@ impl WinitInputHelper {
     ///
     /// `WinitInputHelper::Update` is easier to use.
     /// But this method is useful when your application logic steps dont line up with winit's event loop.
-    /// e.g. you have a seperate thread for application logic using WinitInputHandler that constantly
+    /// e.g. you have a seperate thread for application logic using WinitInputHelper that constantly
     /// runs regardless of winit's event loop and you need to send events to it directly.
     pub fn step_with_window_events(&mut self, events: &[WindowEvent]) {
         self.step();
@@ -96,7 +96,11 @@ impl WinitInputHelper {
         match event {
             WindowEvent::CloseRequested | WindowEvent::Destroyed => self.quit = true,
             WindowEvent::Focused(false) => self.current = None,
-            WindowEvent::Focused(true) => self.current = Some(CurrentInput::new()),
+            WindowEvent::Focused(true) => {
+                if self.current.is_none() {
+                    self.current = Some(CurrentInput::new())
+                }
+            }
             WindowEvent::DroppedFile(ref path) => self.dropped_file = Some(path.clone()),
             WindowEvent::Resized(ref size) => {
                 self.window_resized = Some(*size);
