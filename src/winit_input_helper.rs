@@ -117,8 +117,8 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed"
-    /// Otherwise returns false
+    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
+    /// Otherwise returns false.
     pub fn key_pressed(&self, check_key_code: VirtualKeyCode) -> bool {
         if let Some(ref current) = self.current {
             for action in &current.key_actions {
@@ -132,8 +132,8 @@ impl WinitInputHelper {
         false
     }
 
-    /// Returns true when the specified mouse button goes from "not pressed" to "pressed"
-    /// Otherwise returns false
+    /// Returns true when the specified mouse button goes from "not pressed" to "pressed".
+    /// Otherwise returns false.
     ///
     /// Left   => 0
     /// Right  => 1
@@ -153,8 +153,8 @@ impl WinitInputHelper {
         false
     }
 
-    /// Returns true when the specified keyboard key goes from "pressed" to "not pressed"
-    /// Otherwise returns false
+    /// Returns true when the specified keyboard key goes from "pressed" to "not pressed".
+    /// Otherwise returns false.
     pub fn key_released(&self, check_key_code: VirtualKeyCode) -> bool {
         if let Some(ref current) = self.current {
             for action in &current.key_actions {
@@ -168,8 +168,8 @@ impl WinitInputHelper {
         false
     }
 
-    /// Returns true when the specified mouse button goes from "pressed" to "not pressed"
-    /// Otherwise returns false
+    /// Returns true when the specified mouse button goes from "pressed" to "not pressed".
+    /// Otherwise returns false.
     ///
     /// Left   => 0
     /// Right  => 1
@@ -189,8 +189,8 @@ impl WinitInputHelper {
         false
     }
 
-    /// Returns true while the specified keyboard key remains "pressed"
-    /// Otherwise returns false
+    /// Returns true while the specified keyboard key remains "pressed".
+    /// Otherwise returns false.
     pub fn key_held(&self, key_code: VirtualKeyCode) -> bool {
         match self.current {
             Some(ref current) => current.key_held[key_code as usize],
@@ -198,8 +198,8 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns true while the specified mouse button remains "pressed"
-    /// Otherwise returns false
+    /// Returns true while the specified mouse button remains "pressed".
+    /// Otherwise returns false.
     ///
     /// Left   => 0
     /// Right  => 1
@@ -213,20 +213,20 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns true while any shift key is held on the keyboard
-    /// Otherwise returns false
+    /// Returns true while any shift key is held on the keyboard.
+    /// Otherwise returns false.
     pub fn held_shift(&self) -> bool {
         self.key_held(VirtualKeyCode::LShift) || self.key_held(VirtualKeyCode::RShift)
     }
 
-    /// Returns true while any control key is held on the keyboard
-    /// Otherwise returns false
+    /// Returns true while any control key is held on the keyboard.
+    /// Otherwise returns false.
     pub fn held_control(&self) -> bool {
         self.key_held(VirtualKeyCode::LControl) || self.key_held(VirtualKeyCode::RControl)
     }
 
-    /// Returns true while any alt key is held on the keyboard
-    /// Otherwise returns false
+    /// Returns true while any alt key is held on the keyboard.
+    /// Otherwise returns false.
     pub fn held_alt(&self) -> bool {
         self.key_held(VirtualKeyCode::LAlt) || self.key_held(VirtualKeyCode::RAlt)
     }
@@ -241,7 +241,7 @@ impl WinitInputHelper {
     }
 
     /// Returns `None` when the mouse is outside of the window.
-    /// Otherwise returns the mouse coordinates in pixels
+    /// Otherwise returns the mouse coordinates in pixels.
     pub fn mouse(&self) -> Option<(f32, f32)> {
         match self.current {
             Some(ref current) => current.mouse_point,
