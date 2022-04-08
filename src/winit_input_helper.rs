@@ -87,7 +87,7 @@ impl WinitInputHelper {
         self.dropped_file = None;
         self.window_resized = None;
         self.scale_factor_changed = None;
-        if let Some(ref mut current) = self.current {
+        if let Some(current) = &mut self.current {
             current.step();
         }
     }
@@ -101,8 +101,8 @@ impl WinitInputHelper {
                     self.current = Some(CurrentInput::new())
                 }
             }
-            WindowEvent::DroppedFile(ref path) => self.dropped_file = Some(path.clone()),
-            WindowEvent::Resized(ref size) => {
+            WindowEvent::DroppedFile(path) => self.dropped_file = Some(path.clone()),
+            WindowEvent::Resized(size) => {
                 self.window_resized = Some(*size);
                 self.window_size = Some((*size).into());
             }
@@ -112,7 +112,7 @@ impl WinitInputHelper {
             }
             _ => {}
         }
-        if let Some(ref mut current) = self.current {
+        if let Some(current) = &mut self.current {
             current.handle_event(event);
         }
     }
@@ -120,7 +120,7 @@ impl WinitInputHelper {
     /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
     /// Otherwise returns false.
     pub fn key_pressed(&self, check_key_code: VirtualKeyCode) -> bool {
-        if let Some(ref current) = self.current {
+        if let Some(current) = &self.current {
             for action in &current.key_actions {
                 if let KeyAction::Pressed(key_code) = *action {
                     if key_code == check_key_code {
@@ -135,7 +135,7 @@ impl WinitInputHelper {
     /// Returns true when the specified keyboard key goes from "pressed" to "not pressed".
     /// Otherwise returns false.
     pub fn key_released(&self, check_key_code: VirtualKeyCode) -> bool {
-        if let Some(ref current) = self.current {
+        if let Some(current) = &self.current {
             for action in &current.key_actions {
                 if let KeyAction::Released(key_code) = *action {
                     if key_code == check_key_code {
@@ -150,8 +150,8 @@ impl WinitInputHelper {
     /// Returns true while the specified keyboard key remains "pressed".
     /// Otherwise returns false.
     pub fn key_held(&self, key_code: VirtualKeyCode) -> bool {
-        match self.current {
-            Some(ref current) => current.key_held[key_code as usize],
+        match &self.current {
+            Some(current) => current.key_held[key_code as usize],
             None => false,
         }
     }
@@ -183,7 +183,7 @@ impl WinitInputHelper {
     /// Other  => 3..255
     pub fn mouse_pressed(&self, check_mouse_button: usize) -> bool {
         // TODO: Take MouseButton instead of usize
-        if let Some(ref current) = self.current {
+        if let Some(current) = &self.current {
             for action in &current.mouse_actions {
                 if let MouseAction::Pressed(key_code) = *action {
                     if key_code == check_mouse_button {
@@ -204,7 +204,7 @@ impl WinitInputHelper {
     /// Other  => 3..255
     pub fn mouse_released(&self, check_mouse_button: usize) -> bool {
         // TODO: Take MouseButton instead of usize
-        if let Some(ref current) = self.current {
+        if let Some(current) = &self.current {
             for action in &current.mouse_actions {
                 if let MouseAction::Released(key_code) = *action {
                     if key_code == check_mouse_button {
@@ -225,8 +225,8 @@ impl WinitInputHelper {
     /// Other  => 3..255
     pub fn mouse_held(&self, mouse_button: usize) -> bool {
         // TODO: Take MouseButton instead of usize
-        match self.current {
-            Some(ref current) => current.mouse_held[mouse_button as usize],
+        match &self.current {
+            Some(current) => current.mouse_held[mouse_button as usize],
             None => false,
         }
     }
@@ -234,8 +234,8 @@ impl WinitInputHelper {
     /// Returns `0.0` if the mouse is outside of the window.
     /// Otherwise returns the amount scrolled by the mouse during the last step.
     pub fn scroll_diff(&self) -> f32 {
-        match self.current {
-            Some(ref current) => current.scroll_diff,
+        match &self.current {
+            Some(current) => current.scroll_diff,
             None => 0.0,
         }
     }
@@ -243,8 +243,8 @@ impl WinitInputHelper {
     /// Returns `None` when the mouse is outside of the window.
     /// Otherwise returns the mouse coordinates in pixels.
     pub fn mouse(&self) -> Option<(f32, f32)> {
-        match self.current {
-            Some(ref current) => current.mouse_point,
+        match &self.current {
+            Some(current) => current.mouse_point,
             None => None,
         }
     }
@@ -252,7 +252,7 @@ impl WinitInputHelper {
     /// Returns the change in mouse coordinates that occured during the last step.
     /// Returns `(0.0, 0.0)` if the window loses focus.
     pub fn mouse_diff(&self) -> (f32, f32) {
-        if let Some(ref current_input) = self.current {
+        if let Some(current_input) = &self.current {
             if let Some(cur) = current_input.mouse_point {
                 if let Some(prev) = current_input.mouse_point_prev {
                     return (cur.0 - prev.0, cur.1 - prev.1);
@@ -265,8 +265,8 @@ impl WinitInputHelper {
     /// Returns the characters pressed during the last step.
     /// The earlier the character was pressed, the lower the index in the Vec.
     pub fn text(&self) -> Vec<TextChar> {
-        match self.current {
-            Some(ref current) => current.text.clone(),
+        match &self.current {
+            Some(current) => current.text.clone(),
             None => vec![],
         }
     }
