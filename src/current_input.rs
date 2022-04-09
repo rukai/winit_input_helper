@@ -39,8 +39,8 @@ impl CurrentInput {
     }
 
     pub fn step(&mut self) {
-        self.mouse_actions = vec![];
-        self.key_actions = vec![];
+        self.mouse_actions.clear();
+        self.key_actions.clear();
         self.scroll_diff = 0.0;
         self.mouse_point_prev = self.mouse_point;
         self.text.clear();
