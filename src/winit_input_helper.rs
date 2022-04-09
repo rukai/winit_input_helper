@@ -119,10 +119,30 @@ impl WinitInputHelper {
 
     /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
     /// Otherwise returns false.
+    ///
+    /// This is suitable for game controls.
     pub fn key_pressed(&self, check_key_code: VirtualKeyCode) -> bool {
         if let Some(current) = &self.current {
             for action in &current.key_actions {
                 if let KeyAction::Pressed(key_code) = *action {
+                    if key_code == check_key_code {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
+    /// Otherwise returns false.
+    ///
+    /// Will repeat key presses while held down according to the OS's key repeat configuration
+    /// This is suitable for UI.
+    pub fn key_pressed_os(&self, check_key_code: VirtualKeyCode) -> bool {
+        if let Some(current) = &self.current {
+            for action in &current.key_actions {
+                if let KeyAction::PressedOs(key_code) = *action {
                     if key_code == check_key_code {
                         return true;
                     }

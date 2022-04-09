@@ -14,6 +14,10 @@ fn main() {
         // It will return true when the last event has been processed and it is time to run your application logic.
         if input.update(&event) {
             // query keypresses this update
+            if input.key_pressed_os(VirtualKeyCode::A) {
+                println!("The 'A' key was pressed on the keyboard (OS repeating)");
+            }
+
             if input.key_pressed(VirtualKeyCode::A) {
                 println!("The 'A' key was pressed on the keyboard");
             }

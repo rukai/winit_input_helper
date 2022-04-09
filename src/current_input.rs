@@ -52,8 +52,11 @@ impl CurrentInput {
                 if let Some(keycode) = input.virtual_keycode {
                     match input.state {
                         ElementState::Pressed => {
+                            if !self.key_held[keycode as usize] {
+                                self.key_actions.push(KeyAction::Pressed(keycode));
+                            }
                             self.key_held[keycode as usize] = true;
-                            self.key_actions.push(KeyAction::Pressed(keycode));
+                            self.key_actions.push(KeyAction::PressedOs(keycode));
                             if let VirtualKeyCode::Back = keycode {
                                 self.text.push(TextChar::Back);
                             }
@@ -113,6 +116,7 @@ impl CurrentInput {
 #[derive(Clone)]
 pub enum KeyAction {
     Pressed(VirtualKeyCode),
+    PressedOs(VirtualKeyCode),
     Released(VirtualKeyCode),
 }
 
