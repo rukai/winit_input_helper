@@ -1,4 +1,8 @@
+#[cfg(feature = "winit")]
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
+
+#[cfg(all(feature = "glutin", not(feature = "winit")))]
+use glutin::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
 
 /// Stores a character or a backspace.
 ///

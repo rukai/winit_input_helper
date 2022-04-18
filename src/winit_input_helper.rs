@@ -1,4 +1,11 @@
+#[cfg(feature = "winit")]
 use winit::dpi::PhysicalSize;
+#[cfg(feature = "winit")]
+use winit::event::{Event, VirtualKeyCode, WindowEvent};
+
+#[cfg(all(feature = "glutin", not(feature = "winit")))]
+use winit::dpi::PhysicalSize;
+#[cfg(all(feature = "glutin", not(feature = "winit")))]
 use winit::event::{Event, VirtualKeyCode, WindowEvent};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
