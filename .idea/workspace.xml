@@ -17,7 +17,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c395b7c5-554a-444d-9e9b-3812b8412d98" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/winit_input_helper.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/winit_input_helper.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,7 +81,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1650325875699</updated>
-      <workItem from="1650325876998" duration="555000" />
+      <workItem from="1650325876998" duration="704000" />
     </task>
     <servers />
   </component>
