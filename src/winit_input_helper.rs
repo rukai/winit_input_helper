@@ -1,5 +1,5 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{Event, VirtualKeyCode, WindowEvent};
+use winit::event::{Event, VirtualKeyCode, WindowEvent, DeviceEvent};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
 use std::path::PathBuf;
@@ -53,6 +53,7 @@ impl WinitInputHelper {
     /// *   `Event::NewEvents` clears all internal state.
     /// *   `Event::MainEventsCleared` causes this function to return true, signifying a "step" has completed.
     /// *   `Event::WindowEvent` updates internal state, this will affect the result of accessor methods immediately.
+    /// *   `Event::DeviceEvent` updates value of `mouse_diff()`
     pub fn update<T>(&mut self, event: &Event<T>) -> bool {
         match &event {
             Event::NewEvents(_) => {
@@ -63,6 +64,10 @@ impl WinitInputHelper {
                 self.process_window_event(event);
                 false
             }
+            Event::DeviceEvent { event, .. } => {
+                self.process_device_event(event);
+                false
+            },
             Event::MainEventsCleared => true,
             _ => false,
         }
@@ -114,6 +119,12 @@ impl WinitInputHelper {
         }
         if let Some(current) = &mut self.current {
             current.handle_event(event);
+        }
+    }
+    
+    fn process_device_event(&mut self, event: &DeviceEvent) {
+        if let Some(ref mut current) = self.current {
+            current.handle_device_event(event);
         }
     }
 
@@ -260,23 +271,36 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns `None` when the mouse is outside of the window.
-    /// Otherwise returns the mouse coordinates in pixels.
-    pub fn mouse(&self) -> Option<(f32, f32)> {
+    /// Returns `None` when the cursor is outside of the window.
+    /// Otherwise returns the cursor coordinates in pixels.
+    pub fn cursor(&self) -> Option<(f32, f32)> {
         match &self.current {
-            Some(current) => current.mouse_point,
+            Some(current) => current.cursor_point,
             None => None,
         }
     }
 
-    /// Returns the change in mouse coordinates that occured during the last step.
+    /// Returns the change in cursor coordinates that occured during the last step.
     /// Returns `(0.0, 0.0)` if the window loses focus.
-    pub fn mouse_diff(&self) -> (f32, f32) {
+    pub fn cursor_diff(&self) -> (f32, f32) {
         if let Some(current_input) = &self.current {
-            if let Some(cur) = current_input.mouse_point {
-                if let Some(prev) = current_input.mouse_point_prev {
+            if let Some(cur) = current_input.cursor_point {
+                if let Some(prev) = current_input.cursor_point_prev {
                     return (cur.0 - prev.0, cur.1 - prev.1);
                 }
+            }
+        }
+        (0.0, 0.0)
+    }
+
+    /// Returns the change in mouse coordinates that occured during the last step.
+    /// This function tracks device motion and tracks the `DeviceEvent::CursorMotion` event
+    /// Unlike `cursor_diff` this works even if the window loses focus and if the cursor didn't move.
+    /// Because of tracking only `DeviceEvent` using `step_with_windows_events` won't update this as it is not a `WindowEvent`
+    pub fn mouse_diff(&self) -> (f32, f32) {
+        if let Some(current_input) = &self.current {
+            if let Some(diff) = current_input.mouse_diff {
+                return diff;
             }
         }
         (0.0, 0.0)

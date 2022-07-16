@@ -1,4 +1,4 @@
-use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
+use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent, DeviceEvent};
 
 /// Stores a character or a backspace.
 ///
@@ -18,8 +18,9 @@ pub struct CurrentInput {
     pub key_actions: Vec<KeyAction>,
     pub key_held: [bool; 255],
     pub mouse_held: [bool; 255],
-    pub mouse_point: Option<(f32, f32)>,
-    pub mouse_point_prev: Option<(f32, f32)>,
+    pub cursor_point: Option<(f32, f32)>,
+    pub cursor_point_prev: Option<(f32, f32)>,
+    pub mouse_diff: Option<(f32, f32)>,
     pub scroll_diff: f32,
     pub text: Vec<TextChar>,
 }
@@ -31,8 +32,9 @@ impl CurrentInput {
             key_actions: vec![],
             key_held: [false; 255],
             mouse_held: [false; 255],
-            mouse_point: None,
-            mouse_point_prev: None,
+            cursor_point: None,
+            cursor_point_prev: None,
+            mouse_diff: None,
             scroll_diff: 0.0,
             text: vec![],
         }
@@ -42,7 +44,8 @@ impl CurrentInput {
         self.mouse_actions.clear();
         self.key_actions.clear();
         self.scroll_diff = 0.0;
-        self.mouse_point_prev = self.mouse_point;
+        self.cursor_point_prev = self.cursor_point;
+        self.mouse_diff = None;
         self.text.clear();
     }
 
@@ -75,7 +78,7 @@ impl CurrentInput {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                self.mouse_point = Some((position.x as f32, position.y as f32));
+                self.cursor_point = Some((position.x as f32, position.y as f32));
             }
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
@@ -108,6 +111,15 @@ impl CurrentInput {
                     }
                 }
             }
+            _ => {}
+        }
+    }
+    
+    pub fn handle_device_event(&mut self, event: &DeviceEvent ) {
+        match event {
+            DeviceEvent::MouseMotion {delta, ..} => {
+                self.mouse_diff = Some( (delta.0 as f32, delta.1 as f32) )
+            },
             _ => {}
         }
     }
