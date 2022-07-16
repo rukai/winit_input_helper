@@ -27,12 +27,16 @@ fn main() {
                 return;
             }
 
-            // query the change in mouse this update
-            let mouse_diff = input.mouse_diff();
-            if mouse_diff != (0.0, 0.0) {
-                println!("The mouse diff is: {:?}", mouse_diff);
-                println!("The mouse position is: {:?}", input.mouse());
+            // query the change in cursor this update
+            let cursor_diff = input.cursor_diff();
+            if cursor_diff != (0.0, 0.0) {
+                println!("The cursor diff is: {:?}", cursor_diff);
+                println!("The cursor position is: {:?}", input.cursor());
             }
+
+            //query the change in mouse this update (useful for camera)
+            let mouse_diff = input.mouse_diff();
+            println!("The mouse diff is: {:?}", mouse_diff);
 
             // You are expected to control your own timing within this block.
             // Usually via rendering with vsync.
