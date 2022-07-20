@@ -1,5 +1,5 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{Event, VirtualKeyCode, WindowEvent, DeviceEvent};
+use winit::event::{DeviceEvent, Event, VirtualKeyCode, WindowEvent};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
 use std::path::PathBuf;
@@ -67,7 +67,7 @@ impl WinitInputHelper {
             Event::DeviceEvent { event, .. } => {
                 self.process_device_event(event);
                 false
-            },
+            }
             Event::MainEventsCleared => true,
             _ => false,
         }
@@ -121,7 +121,7 @@ impl WinitInputHelper {
             current.handle_event(event);
         }
     }
-    
+
     fn process_device_event(&mut self, event: &DeviceEvent) {
         if let Some(ref mut current) = self.current {
             current.handle_device_event(event);

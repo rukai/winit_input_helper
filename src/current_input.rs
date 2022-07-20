@@ -1,4 +1,6 @@
-use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent, DeviceEvent};
+use winit::event::{
+    DeviceEvent, ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent,
+};
 
 /// Stores a character or a backspace.
 ///
@@ -114,12 +116,12 @@ impl CurrentInput {
             _ => {}
         }
     }
-    
-    pub fn handle_device_event(&mut self, event: &DeviceEvent ) {
+
+    pub fn handle_device_event(&mut self, event: &DeviceEvent) {
         match event {
-            DeviceEvent::MouseMotion {delta, ..} => {
-                self.mouse_diff = Some( (delta.0 as f32, delta.1 as f32) )
-            },
+            DeviceEvent::MouseMotion { delta, .. } => {
+                self.mouse_diff = Some((delta.0 as f32, delta.1 as f32))
+            }
             _ => {}
         }
     }
