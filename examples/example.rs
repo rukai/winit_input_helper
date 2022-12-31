@@ -22,7 +22,8 @@ fn main() {
                 println!("The 'A' key was pressed on the keyboard");
             }
 
-            if input.key_released(VirtualKeyCode::Q) || input.quit() {
+            if input.key_released(VirtualKeyCode::Q) || input.close_requested() || input.destroyed()
+            {
                 *control_flow = ControlFlow::Exit;
                 return;
             }

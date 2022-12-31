@@ -25,7 +25,8 @@ pub struct WinitInputHelper {
     window_size: Option<(u32, u32)>,
     scale_factor_changed: Option<f64>,
     scale_factor: Option<f64>,
-    quit: bool,
+    destroyed: bool,
+    close_requested: bool,
 }
 
 impl Default for WinitInputHelper {
@@ -43,7 +44,8 @@ impl WinitInputHelper {
             window_size: None,
             scale_factor_changed: None,
             scale_factor: None,
-            quit: false,
+            destroyed: false,
+            close_requested: false,
         }
     }
 
@@ -87,6 +89,7 @@ impl WinitInputHelper {
         self.dropped_file = None;
         self.window_resized = None;
         self.scale_factor_changed = None;
+        self.close_requested = false;
         if let Some(current) = &mut self.current {
             current.step();
         }
@@ -94,7 +97,8 @@ impl WinitInputHelper {
 
     fn process_window_event(&mut self, event: &WindowEvent) {
         match event {
-            WindowEvent::CloseRequested | WindowEvent::Destroyed => self.quit = true,
+            WindowEvent::CloseRequested => self.close_requested = true,
+            WindowEvent::Destroyed => self.destroyed = true,
             WindowEvent::Focused(false) => self.current = None,
             WindowEvent::Focused(true) => {
                 if self.current.is_none() {
@@ -246,7 +250,7 @@ impl WinitInputHelper {
     pub fn mouse_held(&self, mouse_button: usize) -> bool {
         // TODO: Take MouseButton instead of usize
         match &self.current {
-            Some(current) => current.mouse_held[mouse_button as usize],
+            Some(current) => current.mouse_held[mouse_button],
             None => false,
         }
     }
@@ -320,9 +324,22 @@ impl WinitInputHelper {
         self.scale_factor
     }
 
-    /// Returns true if the OS has requested the application to quit.
+    /// Returns true if the window has been destroyed
     /// Otherwise returns false.
+    /// Once this method has returned true once all following calls to this method will also return true.
+    pub fn destroyed(&self) -> bool {
+        self.destroyed
+    }
+
+    /// Returns true if the OS has requested the application to close during this step.
+    /// Otherwise returns false.
+    pub fn close_requested(&self) -> bool {
+        self.close_requested
+    }
+
+    /// Deprecated
+    #[deprecated(note = "Instead use `input.close_requested() || input.destroyed()`")]
     pub fn quit(&self) -> bool {
-        self.quit
+        self.close_requested || self.destroyed
     }
 }
