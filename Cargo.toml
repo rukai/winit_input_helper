@@ -10,7 +10,7 @@ keywords = ["winit", "input", "helper", "state", "cache"]
 categories = ["game-engines", "os", "gui"]
 
 [dependencies]
-winit = { version = "0.27.0", default-features = false }
+winit = { version = "0.28", default-features = false }
 
 [dev-dependencies]
-winit = { version = "0.27.0" }
+winit = { version = "0.28" }
