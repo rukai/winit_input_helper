@@ -57,3 +57,10 @@ fn main() {
     });
 }
 ```
+
+## Publishing a new version
+
+In order to avoid forcing the user to enable the default winit backends, winit_input_helper sets its winit dependency to `default-features = false`.
+This complicates the publishing procedure a little because winit cannot compile without any backends enabled.
+
+So to publish we run: `cargo publish --features winit/default`
