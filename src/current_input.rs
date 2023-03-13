@@ -20,7 +20,8 @@ pub struct CurrentInput {
     pub mouse_held: [bool; 255],
     pub mouse_point: Option<(f32, f32)>,
     pub mouse_point_prev: Option<(f32, f32)>,
-    pub scroll_diff: f32,
+    pub y_scroll_diff: f32,
+    pub x_scroll_diff: f32,
     pub text: Vec<TextChar>,
 }
 
@@ -33,7 +34,8 @@ impl CurrentInput {
             mouse_held: [false; 255],
             mouse_point: None,
             mouse_point_prev: None,
-            scroll_diff: 0.0,
+            y_scroll_diff: 0.0,
+            x_scroll_diff: 0.0,
             text: vec![],
         }
     }
@@ -41,7 +43,8 @@ impl CurrentInput {
     pub fn step(&mut self) {
         self.mouse_actions.clear();
         self.key_actions.clear();
-        self.scroll_diff = 0.0;
+        self.y_scroll_diff = 0.0;
+        self.x_scroll_diff = 0.0;
         self.mouse_point_prev = self.mouse_point;
         self.text.clear();
     }
@@ -101,10 +104,11 @@ impl CurrentInput {
 
                 match delta {
                     MouseScrollDelta::LineDelta(_, y) => {
-                        self.scroll_diff += y;
+                        self.y_scroll_diff += y;
                     }
                     MouseScrollDelta::PixelDelta(delta) => {
-                        self.scroll_diff += (delta.y / PIXELS_PER_LINE) as f32
+                        self.y_scroll_diff += (delta.y / PIXELS_PER_LINE) as f32;
+                        self.x_scroll_diff += (delta.x / PIXELS_PER_LINE) as f32;
                     }
                 }
             }
