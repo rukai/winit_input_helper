@@ -14,3 +14,6 @@ winit = { version = "0.28", default-features = false }
 
 [dev-dependencies]
 winit = { version = "0.28" }
+
+[package.metadata.docs.rs]
+features = ["winit/default"]
