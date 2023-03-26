@@ -103,8 +103,7 @@ impl CurrentInput {
                 const PIXELS_PER_LINE: f64 = 38.0;
 
                 match delta {
-                    MouseScrollDelta::LineDelta(x, y) => {
-                        self.x_scroll_diff += x;
+                    MouseScrollDelta::LineDelta(_, y) => {
                         self.y_scroll_diff += y;
                     }
                     MouseScrollDelta::PixelDelta(delta) => {
