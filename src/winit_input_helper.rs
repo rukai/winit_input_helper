@@ -260,7 +260,7 @@ impl WinitInputHelper {
     /// Returns (vertically, horizontally)
     pub fn scroll_diff(&self) -> (f32, f32) {
         match &self.current {
-            Some(current) => (current.y_scroll_diff, current.x_scroll_diff),
+            Some(current) => (current.x_scroll_diff, current.y_scroll_diff),
             None => (0.0, 0.0),
         }
     }

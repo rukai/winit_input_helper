@@ -35,6 +35,11 @@ fn main() {
                 println!("The mouse position is: {:?}", input.mouse());
             }
 
+            let scroll_diff = input.scroll_diff();
+            if scroll_diff != (0.0, 0.0) {
+                println!("The scroll diff is: {:?}", scroll_diff);
+            }
+
             // You are expected to control your own timing within this block.
             // Usually via rendering with vsync.
             // render();
