@@ -257,10 +257,10 @@ impl WinitInputHelper {
 
     /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
     /// Otherwise returns the amount scrolled by the mouse during the last step.
-    /// Returns (vertically, horizontally)
+    /// Returns (horizontally, vertically)
     pub fn scroll_diff(&self) -> (f32, f32) {
         match &self.current {
-            Some(current) => (current.y_scroll_diff, current.x_scroll_diff),
+            Some(current) => (current.x_scroll_diff, current.y_scroll_diff),
             None => (0.0, 0.0),
         }
     }
