@@ -1,7 +1,7 @@
 [package]
 name = "winit_input_helper"
 repository = "https://github.com/rukai/winit_input_helper"
-version = "0.14.0"
+version = "0.14.1"
 edition = "2021"
 authors = ["Rukai <rubickent@gmail.com>"]
 license = "MIT"
@@ -14,3 +14,6 @@ winit = { version = "0.28", default-features = false }
 
 [dev-dependencies]
 winit = { version = "0.28" }
+
+[package.metadata.docs.rs]
+features = ["winit/default"]
