@@ -1,7 +1,7 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{Event, VirtualKeyCode, WindowEvent};
+use winit::event::{Event, ScanCode, VirtualKeyCode, WindowEvent};
 
-use crate::current_input::{CurrentInput, KeyAction, MouseAction, TextChar};
+use crate::current_input::{CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar};
 use std::path::PathBuf;
 
 /// The main struct of the API.
@@ -178,6 +178,60 @@ impl WinitInputHelper {
             Some(current) => current.key_held[key_code as usize],
             None => false,
         }
+    }
+
+    /// Returns true when the key with the specified scancode goes from "not pressed" to "pressed".
+    /// Otherwise returns false.
+    ///
+    /// This is suitable for game controls that do not depend on the user  keyboard layout.
+    pub fn key_pressed_scancode(&self, scancode: ScanCode) -> bool {
+        if let Some(current) = &self.current {
+            let searched_action = ScanCodeAction::Pressed(scancode);
+            if current.scancode_actions.contains(&searched_action) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Returns true when the key with the specified scancode goes from "not pressed" to "pressed".
+    /// Otherwise returns false.
+    ///
+    /// Will repeat key presses while held down according to the OS's key repeat configuration
+    /// This is suitable for UI, and does not depend on the user keyboard layout.
+    pub fn key_pressed_os_scancode(&self, scancode: ScanCode) -> bool {
+        if let Some(current) = &self.current {
+            let searched_action = ScanCodeAction::PressedOs(scancode);
+            if current.scancode_actions.contains(&searched_action) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Returns true when the key with the specified scancode goes from "pressed" to "not pressed".
+    /// Otherwise returns false.
+    /// 
+    /// This does not depend on the user keyboard layout.
+    pub fn key_released_scancode(&self, scancode: ScanCode) -> bool {
+        if let Some(current) = &self.current {
+            let searched_action = ScanCodeAction::Released(scancode);
+            if current.scancode_actions.contains(&searched_action) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Returns true when the key with the specified scancode remains "pressed".
+    /// Otherwise returns false.
+    /// 
+    /// This does not depend on the user keyboard layout.
+    pub fn key_held_scancode(&self, scancode: ScanCode) -> bool {
+        if let Some(current) = &self.current {
+            return current.scancode_held.contains(&scancode);
+        }
+        false
     }
 
     /// Returns true while any shift key is held on the keyboard.

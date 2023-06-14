@@ -28,6 +28,21 @@ fn main() {
                 return;
             }
 
+            if input.key_pressed_scancode(17) {
+                // 17 is W for QWERTY
+                println!("The 'W' key was pressed on the keyboard (scan code)");
+            }
+
+            if input.key_pressed_os_scancode(18) {
+                // 18 is E for QWERTY
+                println!("The 'E' key was pressed on the keyboard (scan code, Os Repeating)");
+            }
+
+            if input.key_held_scancode(19) {
+                // 19 is R for QWERTY
+                println!("The 'R' key is held (scan code)");
+            }
+
             // query the change in mouse this update
             let mouse_diff = input.mouse_diff();
             if mouse_diff != (0.0, 0.0) {
