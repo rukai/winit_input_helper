@@ -58,46 +58,43 @@ impl CurrentInput {
 
     pub fn handle_event(&mut self, event: &WindowEvent) {
         match event {
-            WindowEvent::KeyboardInput { input, .. } => {
-                match input.state {
-                    ElementState::Pressed => {
-                        if let Some(keycode) = input.virtual_keycode {
-                            if !self.key_held[keycode as usize] {
-                                self.key_actions.push(KeyAction::Pressed(keycode));
-                            }
-
-                            self.key_held[keycode as usize] = true;
-                            self.key_actions.push(KeyAction::PressedOs(keycode));
-                            if let VirtualKeyCode::Back = keycode {
-                                self.text.push(TextChar::Back);
-                            }
+            WindowEvent::KeyboardInput { input, .. } => match input.state {
+                ElementState::Pressed => {
+                    if let Some(keycode) = input.virtual_keycode {
+                        if !self.key_held[keycode as usize] {
+                            self.key_actions.push(KeyAction::Pressed(keycode));
                         }
 
-                        let scancode = input.scancode;
-
-                        if !self.scancode_held.contains(&scancode) {
-                            self.scancode_actions
-                                .push(ScanCodeAction::Pressed(scancode));
-                            self.scancode_held.push(scancode);
+                        self.key_held[keycode as usize] = true;
+                        self.key_actions.push(KeyAction::PressedOs(keycode));
+                        if let VirtualKeyCode::Back = keycode {
+                            self.text.push(TextChar::Back);
                         }
-
-                        self.scancode_actions
-                            .push(ScanCodeAction::PressedOs(scancode));
-                        // no handling for the back key as a scancode
                     }
-                    ElementState::Released => {
-                        if let Some(keycode) = input.virtual_keycode {
-                            self.key_held[keycode as usize] = false;
-                            self.key_actions.push(KeyAction::Released(keycode));
-                        }
 
-                        let scancode = input.scancode;
-                        self.scancode_held.retain(|&x| x != scancode);
+                    let scancode = input.scancode;
+
+                    if !self.scancode_held.contains(&scancode) {
                         self.scancode_actions
-                            .push(ScanCodeAction::Released(scancode));
+                            .push(ScanCodeAction::Pressed(scancode));
+                        self.scancode_held.push(scancode);
                     }
+
+                    self.scancode_actions
+                        .push(ScanCodeAction::PressedOs(scancode));
                 }
-            }
+                ElementState::Released => {
+                    if let Some(keycode) = input.virtual_keycode {
+                        self.key_held[keycode as usize] = false;
+                        self.key_actions.push(KeyAction::Released(keycode));
+                    }
+
+                    let scancode = input.scancode;
+                    self.scancode_held.retain(|&x| x != scancode);
+                    self.scancode_actions
+                        .push(ScanCodeAction::Released(scancode));
+                }
+            },
             WindowEvent::ReceivedCharacter(c) => {
                 let c = *c;
                 if c != '\x08' && c != '\r' && c != '\n' {

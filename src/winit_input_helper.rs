@@ -183,7 +183,7 @@ impl WinitInputHelper {
     /// Returns true when the key with the specified scancode goes from "not pressed" to "pressed".
     /// Otherwise returns false.
     ///
-    /// This is suitable for game controls that do not depend on the user  keyboard layout.
+    /// This is suitable for game controls that do not depend on the user keyboard layout.
     pub fn key_pressed_scancode(&self, scancode: ScanCode) -> bool {
         if let Some(current) = &self.current {
             let searched_action = ScanCodeAction::Pressed(scancode);
@@ -211,7 +211,7 @@ impl WinitInputHelper {
 
     /// Returns true when the key with the specified scancode goes from "pressed" to "not pressed".
     /// Otherwise returns false.
-    /// 
+    ///
     /// This does not depend on the user keyboard layout.
     pub fn key_released_scancode(&self, scancode: ScanCode) -> bool {
         if let Some(current) = &self.current {
@@ -225,7 +225,7 @@ impl WinitInputHelper {
 
     /// Returns true when the key with the specified scancode remains "pressed".
     /// Otherwise returns false.
-    /// 
+    ///
     /// This does not depend on the user keyboard layout.
     pub fn key_held_scancode(&self, scancode: ScanCode) -> bool {
         if let Some(current) = &self.current {
