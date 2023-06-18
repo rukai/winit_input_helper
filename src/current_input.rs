@@ -1,4 +1,6 @@
-use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
+use winit::event::{
+    ElementState, MouseButton, MouseScrollDelta, ScanCode, VirtualKeyCode, WindowEvent,
+};
 
 /// Stores a character or a backspace.
 ///
@@ -16,7 +18,9 @@ pub enum TextChar {
 pub struct CurrentInput {
     pub mouse_actions: Vec<MouseAction>,
     pub key_actions: Vec<KeyAction>,
+    pub scancode_actions: Vec<ScanCodeAction>,
     pub key_held: [bool; 255],
+    pub scancode_held: Vec<ScanCode>, // some scan codes are higher than 255 so using an array may be dangerous
     pub mouse_held: [bool; 255],
     pub mouse_point: Option<(f32, f32)>,
     pub mouse_point_prev: Option<(f32, f32)>,
@@ -30,7 +34,9 @@ impl CurrentInput {
         CurrentInput {
             mouse_actions: vec![],
             key_actions: vec![],
+            scancode_actions: vec![],
             key_held: [false; 255],
+            scancode_held: vec![],
             mouse_held: [false; 255],
             mouse_point: None,
             mouse_point_prev: None,
@@ -43,6 +49,7 @@ impl CurrentInput {
     pub fn step(&mut self) {
         self.mouse_actions.clear();
         self.key_actions.clear();
+        self.scancode_actions.clear();
         self.y_scroll_diff = 0.0;
         self.x_scroll_diff = 0.0;
         self.mouse_point_prev = self.mouse_point;
@@ -51,26 +58,43 @@ impl CurrentInput {
 
     pub fn handle_event(&mut self, event: &WindowEvent) {
         match event {
-            WindowEvent::KeyboardInput { input, .. } => {
-                if let Some(keycode) = input.virtual_keycode {
-                    match input.state {
-                        ElementState::Pressed => {
-                            if !self.key_held[keycode as usize] {
-                                self.key_actions.push(KeyAction::Pressed(keycode));
-                            }
-                            self.key_held[keycode as usize] = true;
-                            self.key_actions.push(KeyAction::PressedOs(keycode));
-                            if let VirtualKeyCode::Back = keycode {
-                                self.text.push(TextChar::Back);
-                            }
+            WindowEvent::KeyboardInput { input, .. } => match input.state {
+                ElementState::Pressed => {
+                    if let Some(keycode) = input.virtual_keycode {
+                        if !self.key_held[keycode as usize] {
+                            self.key_actions.push(KeyAction::Pressed(keycode));
                         }
-                        ElementState::Released => {
-                            self.key_held[keycode as usize] = false;
-                            self.key_actions.push(KeyAction::Released(keycode));
+
+                        self.key_held[keycode as usize] = true;
+                        self.key_actions.push(KeyAction::PressedOs(keycode));
+                        if let VirtualKeyCode::Back = keycode {
+                            self.text.push(TextChar::Back);
                         }
                     }
+
+                    let scancode = input.scancode;
+
+                    if !self.scancode_held.contains(&scancode) {
+                        self.scancode_actions
+                            .push(ScanCodeAction::Pressed(scancode));
+                        self.scancode_held.push(scancode);
+                    }
+
+                    self.scancode_actions
+                        .push(ScanCodeAction::PressedOs(scancode));
                 }
-            }
+                ElementState::Released => {
+                    if let Some(keycode) = input.virtual_keycode {
+                        self.key_held[keycode as usize] = false;
+                        self.key_actions.push(KeyAction::Released(keycode));
+                    }
+
+                    let scancode = input.scancode;
+                    self.scancode_held.retain(|&x| x != scancode);
+                    self.scancode_actions
+                        .push(ScanCodeAction::Released(scancode));
+                }
+            },
             WindowEvent::ReceivedCharacter(c) => {
                 let c = *c;
                 if c != '\x08' && c != '\r' && c != '\n' {
@@ -123,6 +147,13 @@ pub enum KeyAction {
     Pressed(VirtualKeyCode),
     PressedOs(VirtualKeyCode),
     Released(VirtualKeyCode),
+}
+
+#[derive(Clone, PartialEq)]
+pub enum ScanCodeAction {
+    Pressed(ScanCode),
+    PressedOs(ScanCode),
+    Released(ScanCode),
 }
 
 #[derive(Clone)]
