@@ -1,5 +1,6 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{DeviceEvent, Event, ScanCode, VirtualKeyCode, WindowEvent};
+use winit::event::{DeviceEvent, Event, WindowEvent};
+use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar};
 use std::path::PathBuf;
@@ -70,7 +71,7 @@ impl WinitInputHelper {
                 self.process_device_event(event);
                 false
             }
-            Event::MainEventsCleared => true,
+            Event::AboutToWait => true,
             _ => false,
         }
     }
@@ -135,12 +136,13 @@ impl WinitInputHelper {
     /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
     /// Otherwise returns false.
     ///
-    /// This is suitable for game controls.
-    pub fn key_pressed(&self, check_key_code: VirtualKeyCode) -> bool {
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    /// Will never repeat keypresses while held.
+    pub fn key_pressed_logical(&self, check_key: Key<&str>) -> bool {
         if let Some(current) = &self.current {
             for action in &current.key_actions {
-                if let KeyAction::Pressed(key_code) = *action {
-                    if key_code == check_key_code {
+                if let KeyAction::Pressed(key) = action {
+                    if key.as_ref() == check_key {
                         return true;
                     }
                 }
@@ -152,13 +154,15 @@ impl WinitInputHelper {
     /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
     /// Otherwise returns false.
     ///
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    ///
     /// Will repeat key presses while held down according to the OS's key repeat configuration
     /// This is suitable for UI.
-    pub fn key_pressed_os(&self, check_key_code: VirtualKeyCode) -> bool {
+    pub fn key_pressed_os_logical(&self, check_key: Key<&str>) -> bool {
         if let Some(current) = &self.current {
             for action in &current.key_actions {
-                if let KeyAction::PressedOs(key_code) = *action {
-                    if key_code == check_key_code {
+                if let KeyAction::PressedOs(key_code) = action {
+                    if key_code.as_ref() == check_key {
                         return true;
                     }
                 }
@@ -169,11 +173,13 @@ impl WinitInputHelper {
 
     /// Returns true when the specified keyboard key goes from "pressed" to "not pressed".
     /// Otherwise returns false.
-    pub fn key_released(&self, check_key_code: VirtualKeyCode) -> bool {
+    ///
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    pub fn key_released_logical(&self, check_key: Key<&str>) -> bool {
         if let Some(current) = &self.current {
             for action in &current.key_actions {
-                if let KeyAction::Released(key_code) = *action {
-                    if key_code == check_key_code {
+                if let KeyAction::Released(key_code) = action {
+                    if key_code.as_ref() == check_key {
                         return true;
                     }
                 }
@@ -184,20 +190,25 @@ impl WinitInputHelper {
 
     /// Returns true while the specified keyboard key remains "pressed".
     /// Otherwise returns false.
-    pub fn key_held(&self, key_code: VirtualKeyCode) -> bool {
+    ///
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    pub fn key_held_logical(&self, check_key: Key<&str>) -> bool {
         match &self.current {
-            Some(current) => current.key_held[key_code as usize],
+            Some(current) => current.key_held.iter().any(|x| x.as_ref() == check_key),
             None => false,
         }
     }
 
-    /// Returns true when the key with the specified scancode goes from "not pressed" to "pressed".
+    /// Returns true when the key with the specified keycode goes from "not pressed" to "pressed".
     /// Otherwise returns false.
     ///
-    /// This is suitable for game controls that do not depend on the user keyboard layout.
-    pub fn key_pressed_scancode(&self, scancode: ScanCode) -> bool {
+    /// Uses physical keys in the US layout, so for example the `W` key will be in the same physical key on both US and french keyboards.
+    ///
+    /// This is suitable for game controls.
+    pub fn key_pressed(&self, keycode: KeyCode) -> bool {
+        let key = PhysicalKey::Code(keycode);
         if let Some(current) = &self.current {
-            let searched_action = ScanCodeAction::Pressed(scancode);
+            let searched_action = ScanCodeAction::Pressed(key);
             if current.scancode_actions.contains(&searched_action) {
                 return true;
             }
@@ -205,14 +216,17 @@ impl WinitInputHelper {
         false
     }
 
-    /// Returns true when the key with the specified scancode goes from "not pressed" to "pressed".
+    /// Returns true when the key with the specified keycode goes from "not pressed" to "pressed".
     /// Otherwise returns false.
+    ///
+    /// Uses physical keys in the US layout, so for example the `W` key will be in the same physical key on both US and french keyboards.
     ///
     /// Will repeat key presses while held down according to the OS's key repeat configuration
-    /// This is suitable for UI, and does not depend on the user keyboard layout.
-    pub fn key_pressed_os_scancode(&self, scancode: ScanCode) -> bool {
+    /// This is suitable for UI.
+    pub fn key_pressed_os(&self, keycode: KeyCode) -> bool {
+        let key = PhysicalKey::Code(keycode);
         if let Some(current) = &self.current {
-            let searched_action = ScanCodeAction::PressedOs(scancode);
+            let searched_action = ScanCodeAction::PressedOs(key);
             if current.scancode_actions.contains(&searched_action) {
                 return true;
             }
@@ -220,13 +234,14 @@ impl WinitInputHelper {
         false
     }
 
-    /// Returns true when the key with the specified scancode goes from "pressed" to "not pressed".
+    /// Returns true when the key with the specified KeyCode goes from "pressed" to "not pressed".
     /// Otherwise returns false.
     ///
-    /// This does not depend on the user keyboard layout.
-    pub fn key_released_scancode(&self, scancode: ScanCode) -> bool {
+    /// Uses physical keys in the US layout, so for example the `W` key will be in the same physical key on both US and french keyboards.
+    pub fn key_released(&self, keycode: KeyCode) -> bool {
+        let key = PhysicalKey::Code(keycode);
         if let Some(current) = &self.current {
-            let searched_action = ScanCodeAction::Released(scancode);
+            let searched_action = ScanCodeAction::Released(key);
             if current.scancode_actions.contains(&searched_action) {
                 return true;
             }
@@ -234,33 +249,40 @@ impl WinitInputHelper {
         false
     }
 
-    /// Returns true when the key with the specified scancode remains "pressed".
+    /// Returns true when the key with the specified keycode remains "pressed".
     /// Otherwise returns false.
     ///
-    /// This does not depend on the user keyboard layout.
-    pub fn key_held_scancode(&self, scancode: ScanCode) -> bool {
+    /// Uses physical keys in the US layout, so for example the `W` key will be in the same physical key on both US and french keyboards.
+    pub fn key_held(&self, keycode: KeyCode) -> bool {
+        let key = PhysicalKey::Code(keycode);
         if let Some(current) = &self.current {
-            return current.scancode_held.contains(&scancode);
+            return current.scancode_held.contains(&key);
         }
         false
     }
 
     /// Returns true while any shift key is held on the keyboard.
     /// Otherwise returns false.
+    ///
+    /// Uses physical keys.
     pub fn held_shift(&self) -> bool {
-        self.key_held(VirtualKeyCode::LShift) || self.key_held(VirtualKeyCode::RShift)
+        self.key_held(KeyCode::ShiftLeft) || self.key_held(KeyCode::ShiftRight)
     }
 
     /// Returns true while any control key is held on the keyboard.
     /// Otherwise returns false.
+    ///
+    /// Uses physical keys.
     pub fn held_control(&self) -> bool {
-        self.key_held(VirtualKeyCode::LControl) || self.key_held(VirtualKeyCode::RControl)
+        self.key_held(KeyCode::ControlLeft) || self.key_held(KeyCode::ControlRight)
     }
 
     /// Returns true while any alt key is held on the keyboard.
     /// Otherwise returns false.
+    ///
+    /// Uses physical keys.
     pub fn held_alt(&self) -> bool {
-        self.key_held(VirtualKeyCode::LAlt) || self.key_held(VirtualKeyCode::RAlt)
+        self.key_held(KeyCode::AltLeft) || self.key_held(KeyCode::AltRight)
     }
 
     /// Returns true when the specified mouse button goes from "not pressed" to "pressed".
