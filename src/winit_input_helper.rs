@@ -354,10 +354,6 @@ impl WinitInputHelper {
 
     /// Returns the change in mouse coordinates that occured during the last step.
     ///
-    /// This function tracks device motion and tracks the
-    /// `DeviceEvent::CursorMotion` event. Unlike `cursor_diff`, this works
-    /// even if the window loses focus and even if the cursor didn't move.
-    ///
     /// Because this uses `DeviceEvent`s, the `step_with_windows_events`
     /// function won't update this as it is not a `WindowEvent`.
     pub fn mouse_diff(&self) -> (f32, f32) {
