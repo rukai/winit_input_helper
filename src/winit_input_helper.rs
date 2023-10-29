@@ -354,6 +354,8 @@ impl WinitInputHelper {
 
     /// Returns the change in mouse coordinates that occured during the last step.
     ///
+    /// This is useful when implementing first person controls with a captured mouse.
+    ///
     /// Because this uses `DeviceEvent`s, the `step_with_windows_events`
     /// function won't update this as it is not a `WindowEvent`.
     pub fn mouse_diff(&self) -> (f32, f32) {

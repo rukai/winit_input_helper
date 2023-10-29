@@ -146,7 +146,10 @@ impl CurrentInput {
 
     pub fn handle_device_event(&mut self, event: &DeviceEvent) {
         if let DeviceEvent::MouseMotion { delta, .. } = event {
-            self.mouse_diff = Some((delta.0 as f32, delta.1 as f32))
+            match self.mouse_diff {
+                Some((x, y)) => self.mouse_diff = Some((x + delta.0 as f32, y + delta.1 as f32)),
+                None => self.mouse_diff = Some((delta.0 as f32, delta.1 as f32)),
+            }
         }
     }
 }
