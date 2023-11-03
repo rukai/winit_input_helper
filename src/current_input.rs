@@ -1,6 +1,5 @@
-use winit::event::{
-    DeviceEvent, ElementState, MouseButton, MouseScrollDelta, ScanCode, VirtualKeyCode, WindowEvent,
-};
+use winit::event::{DeviceEvent, ElementState, MouseButton, MouseScrollDelta, WindowEvent};
+use winit::keyboard::{Key, NamedKey, PhysicalKey};
 
 /// Stores a character or a backspace.
 ///
@@ -19,8 +18,8 @@ pub struct CurrentInput {
     pub mouse_actions: Vec<MouseAction>,
     pub key_actions: Vec<KeyAction>,
     pub scancode_actions: Vec<ScanCodeAction>,
-    pub key_held: [bool; 255],
-    pub scancode_held: Vec<ScanCode>, // some scan codes are higher than 255 so using an array may be dangerous
+    pub key_held: Vec<Key>,
+    pub scancode_held: Vec<PhysicalKey>, // some scan codes are higher than 255 so using an array may be dangerous
     pub mouse_held: [bool; 255],
     pub cursor_point: Option<(f32, f32)>,
     pub cursor_point_prev: Option<(f32, f32)>,
@@ -36,7 +35,7 @@ impl CurrentInput {
             mouse_actions: vec![],
             key_actions: vec![],
             scancode_actions: vec![],
-            key_held: [false; 255],
+            key_held: vec![],
             scancode_held: vec![],
             mouse_held: [false; 255],
             cursor_point: None,
@@ -61,49 +60,43 @@ impl CurrentInput {
 
     pub fn handle_event(&mut self, event: &WindowEvent) {
         match event {
-            WindowEvent::KeyboardInput { input, .. } => match input.state {
+            WindowEvent::KeyboardInput { event, .. } => match event.state {
                 ElementState::Pressed => {
-                    if let Some(keycode) = input.virtual_keycode {
-                        if !self.key_held[keycode as usize] {
-                            self.key_actions.push(KeyAction::Pressed(keycode));
-                        }
-
-                        self.key_held[keycode as usize] = true;
-                        self.key_actions.push(KeyAction::PressedOs(keycode));
-                        if let VirtualKeyCode::Back = keycode {
-                            self.text.push(TextChar::Back);
-                        }
+                    let logical_key = &event.logical_key;
+                    if !self.key_held.contains(logical_key) {
+                        self.key_actions
+                            .push(KeyAction::Pressed(logical_key.clone()));
                     }
 
-                    let scancode = input.scancode;
+                    self.key_held.push(logical_key.clone());
+                    self.key_actions
+                        .push(KeyAction::PressedOs(logical_key.clone()));
+                    if let Key::Named(NamedKey::Backspace) = logical_key {
+                        self.text.push(TextChar::Back);
+                    }
 
-                    if !self.scancode_held.contains(&scancode) {
+                    let physical_key = &event.physical_key;
+                    if !self.scancode_held.contains(physical_key) {
                         self.scancode_actions
-                            .push(ScanCodeAction::Pressed(scancode));
-                        self.scancode_held.push(scancode);
+                            .push(ScanCodeAction::Pressed(*physical_key));
+                        self.scancode_held.push(*physical_key);
                     }
 
                     self.scancode_actions
-                        .push(ScanCodeAction::PressedOs(scancode));
+                        .push(ScanCodeAction::PressedOs(*physical_key));
                 }
                 ElementState::Released => {
-                    if let Some(keycode) = input.virtual_keycode {
-                        self.key_held[keycode as usize] = false;
-                        self.key_actions.push(KeyAction::Released(keycode));
-                    }
+                    let logical_key = &event.logical_key;
+                    self.key_held.retain(|x| x != logical_key);
+                    self.key_actions
+                        .push(KeyAction::Released(logical_key.clone()));
 
-                    let scancode = input.scancode;
-                    self.scancode_held.retain(|&x| x != scancode);
+                    let physical_key = &event.physical_key;
+                    self.scancode_held.retain(|x| x != physical_key);
                     self.scancode_actions
-                        .push(ScanCodeAction::Released(scancode));
+                        .push(ScanCodeAction::Released(*physical_key));
                 }
             },
-            WindowEvent::ReceivedCharacter(c) => {
-                let c = *c;
-                if c != '\x08' && c != '\r' && c != '\n' {
-                    self.text.push(TextChar::Char(c));
-                }
-            }
             WindowEvent::CursorMoved { position, .. } => {
                 self.cursor_point = Some((position.x as f32, position.y as f32));
             }
@@ -156,16 +149,16 @@ impl CurrentInput {
 
 #[derive(Clone)]
 pub enum KeyAction {
-    Pressed(VirtualKeyCode),
-    PressedOs(VirtualKeyCode),
-    Released(VirtualKeyCode),
+    Pressed(Key),
+    PressedOs(Key),
+    Released(Key),
 }
 
 #[derive(Clone, PartialEq)]
 pub enum ScanCodeAction {
-    Pressed(ScanCode),
-    PressedOs(ScanCode),
-    Released(ScanCode),
+    Pressed(PhysicalKey),
+    PressedOs(PhysicalKey),
+    Released(PhysicalKey),
 }
 
 #[derive(Clone)]
@@ -179,6 +172,8 @@ fn mouse_button_to_int(button: &MouseButton) -> usize {
         MouseButton::Left => 0,
         MouseButton::Right => 1,
         MouseButton::Middle => 2,
+        MouseButton::Back => 3,
+        MouseButton::Forward => 3,
         MouseButton::Other(byte) => *byte as usize,
     }
 }

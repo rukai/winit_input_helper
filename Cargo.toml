@@ -10,10 +10,10 @@ keywords = ["winit", "input", "helper", "state", "cache"]
 categories = ["game-engines", "os", "gui"]
 
 [dependencies]
-winit = { version = "0.28", default-features = false }
+winit = { version = "0.29", default-features = false }
 
 [dev-dependencies]
-winit = { version = "0.28" }
+winit = { version = "0.29" }
 
 [package.metadata.docs.rs]
 features = ["winit/default"]

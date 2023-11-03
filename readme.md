@@ -14,47 +14,49 @@ The current input state can then be accessed via methods such as `key_pressed`, 
 To see all available methods look at [docs.rs](https://docs.rs/winit_input_helper)
 
 ```rust
-use winit::event::VirtualKeyCode;
-use winit::event_loop::{ControlFlow, EventLoop};
+use winit::event_loop::EventLoop;
+use winit::keyboard::{Key, KeyCode};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 fn main() {
     let mut input = WinitInputHelper::new();
 
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoop::new().unwrap();
     let _window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    event_loop.run(move |event, _, control_flow| {
-        // Pass every event to the WindowInputHelper.
-        // It will return true when the last event has been processed and it is time to run your application logic.
-        if input.update(&event) {
-            // query keypresses this update
-            if input.key_pressed_os(VirtualKeyCode::A) {
-                println!("The 'A' key was pressed on the keyboard (OS repeating)");
-            }
+    event_loop
+        .run(move |event, elwt| {
+            // Pass every event to the WindowInputHelper.
+            // It will return true when the last event has been processed and it is time to run your application logic.
+            if input.update(&event) {
+                if input.key_released(KeyCode::KeyQ) || input.close_requested() || input.destroyed()
+                {
+                    elwt.exit();
+                    return;
+                }
 
-            if input.key_pressed(VirtualKeyCode::A) {
-                println!("The 'A' key was pressed on the keyboard");
-            }
+                if input.key_pressed(KeyCode::KeyW) {
+                    println!("The 'W' key (US layout) was pressed on the keyboard");
+                }
 
-            if input.key_released(VirtualKeyCode::Q) || input.close_requested() || input.destroyed() {
-                *control_flow = ControlFlow::Exit;
-                return;
-            }
+                if input.key_held(KeyCode::KeyR) {
+                    println!("The 'R' key (US layout) key is held");
+                }
 
-            // query the change in mouse this update
-            let mouse_diff = input.mouse_diff();
-            if mouse_diff != (0.0, 0.0) {
-                println!("The mouse diff is: {:?}", mouse_diff);
-                println!("The mouse position is: {:?}", input.mouse());
-            }
+                // query the change in cursor this update
+                let cursor_diff = input.cursor_diff();
+                if cursor_diff != (0.0, 0.0) {
+                    println!("The cursor diff is: {:?}", cursor_diff);
+                    println!("The cursor position is: {:?}", input.cursor());
+                }
 
-            // You are expected to control your own timing within this block.
-            // Usually via rendering with vsync.
-            // render();
-        }
-    });
+                // You are expected to control your own timing within this block.
+                // Usually via rendering with vsync.
+                // render();
+            }
+        })
+        .unwrap();
 }
 ```
 
