@@ -133,72 +133,6 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
-    /// Otherwise returns false.
-    ///
-    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
-    /// Will never repeat keypresses while held.
-    pub fn key_pressed_logical(&self, check_key: Key<&str>) -> bool {
-        if let Some(current) = &self.current {
-            for action in &current.key_actions {
-                if let KeyAction::Pressed(key) = action {
-                    if key.as_ref() == check_key {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
-    /// Otherwise returns false.
-    ///
-    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
-    ///
-    /// Will repeat key presses while held down according to the OS's key repeat configuration
-    /// This is suitable for UI.
-    pub fn key_pressed_os_logical(&self, check_key: Key<&str>) -> bool {
-        if let Some(current) = &self.current {
-            for action in &current.key_actions {
-                if let KeyAction::PressedOs(key_code) = action {
-                    if key_code.as_ref() == check_key {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// Returns true when the specified keyboard key goes from "pressed" to "not pressed".
-    /// Otherwise returns false.
-    ///
-    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
-    pub fn key_released_logical(&self, check_key: Key<&str>) -> bool {
-        if let Some(current) = &self.current {
-            for action in &current.key_actions {
-                if let KeyAction::Released(key_code) = action {
-                    if key_code.as_ref() == check_key {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// Returns true while the specified keyboard key remains "pressed".
-    /// Otherwise returns false.
-    ///
-    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
-    pub fn key_held_logical(&self, check_key: Key<&str>) -> bool {
-        match &self.current {
-            Some(current) => current.key_held.iter().any(|x| x.as_ref() == check_key),
-            None => false,
-        }
-    }
-
     /// Returns true when the key with the specified keycode goes from "not pressed" to "pressed".
     /// Otherwise returns false.
     ///
@@ -283,6 +217,72 @@ impl WinitInputHelper {
     /// Uses physical keys.
     pub fn held_alt(&self) -> bool {
         self.key_held(KeyCode::AltLeft) || self.key_held(KeyCode::AltRight)
+    }
+
+    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
+    /// Otherwise returns false.
+    ///
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    /// Will never repeat keypresses while held.
+    pub fn key_pressed_logical(&self, check_key: Key<&str>) -> bool {
+        if let Some(current) = &self.current {
+            for action in &current.key_actions {
+                if let KeyAction::Pressed(key) = action {
+                    if key.as_ref() == check_key {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true when the specified keyboard key goes from "not pressed" to "pressed".
+    /// Otherwise returns false.
+    ///
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    ///
+    /// Will repeat key presses while held down according to the OS's key repeat configuration
+    /// This is suitable for UI.
+    pub fn key_pressed_os_logical(&self, check_key: Key<&str>) -> bool {
+        if let Some(current) = &self.current {
+            for action in &current.key_actions {
+                if let KeyAction::PressedOs(key_code) = action {
+                    if key_code.as_ref() == check_key {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true when the specified keyboard key goes from "pressed" to "not pressed".
+    /// Otherwise returns false.
+    ///
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    pub fn key_released_logical(&self, check_key: Key<&str>) -> bool {
+        if let Some(current) = &self.current {
+            for action in &current.key_actions {
+                if let KeyAction::Released(key_code) = action {
+                    if key_code.as_ref() == check_key {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns true while the specified keyboard key remains "pressed".
+    /// Otherwise returns false.
+    ///
+    /// Uses logical keypresses, so for example `W` is changed between a US and french keyboard.
+    pub fn key_held_logical(&self, check_key: Key<&str>) -> bool {
+        match &self.current {
+            Some(current) => current.key_held.iter().any(|x| x.as_ref() == check_key),
+            None => false,
+        }
     }
 
     /// Returns true when the specified mouse button goes from "not pressed" to "pressed".
