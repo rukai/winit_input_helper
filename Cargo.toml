@@ -1,7 +1,7 @@
 [package]
 name = "winit_input_helper"
 repository = "https://github.com/rukai/winit_input_helper"
-version = "0.14.1"
+version = "0.15.0"
 edition = "2021"
 authors = ["Rukai <rubickent@gmail.com>"]
 license = "MIT"
