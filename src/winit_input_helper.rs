@@ -342,7 +342,7 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns `(0.0, 0.0)` if the mouse is outside of the window.
+    /// Returns `(0.0, 0.0)` when the window is not focused.
     /// Otherwise returns the amount scrolled by the mouse during the last step.
     /// Returns (horizontally, vertically)
     pub fn scroll_diff(&self) -> (f32, f32) {
@@ -352,7 +352,7 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns `None` when the cursor is outside of the window.
+    /// Returns `None` when the window is not focused.
     /// Otherwise returns the cursor coordinates in pixels.
     pub fn cursor(&self) -> Option<(f32, f32)> {
         match &self.current {
