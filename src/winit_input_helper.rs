@@ -352,8 +352,8 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns `None` when the window is not focused.
-    /// Otherwise returns the cursor coordinates in pixels.
+    /// Returns the cursor coordinates in pixels, when window is focused AND (cursor is on window OR any mouse button remains held while cursor moved off window) 
+    /// Otherwise returns `None`
     pub fn cursor(&self) -> Option<(f32, f32)> {
         match &self.current {
             Some(current) => current.cursor_point,
@@ -361,8 +361,8 @@ impl WinitInputHelper {
         }
     }
 
-    /// Returns the change in cursor coordinates that occured during the last step.
-    /// Returns `(0.0, 0.0)` if the window loses focus.
+    /// Returns the change in cursor coordinates that occured during the last step, when window is focused AND (cursor is on window OR any mouse button remains held while cursor moved off window) 
+    /// Otherwise returns `(0.0, 0.0)`.
     pub fn cursor_diff(&self) -> (f32, f32) {
         if let Some(current_input) = &self.current {
             if let Some(cur) = current_input.cursor_point {
