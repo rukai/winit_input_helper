@@ -3,7 +3,7 @@ use winit::event::{DeviceEvent, Event, WindowEvent};
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar};
-use std::path::PathBuf;
+use std::{path::PathBuf, time::{Instant, Duration}};
 
 /// The main struct of the API.
 ///
@@ -28,6 +28,8 @@ pub struct WinitInputHelper {
     scale_factor: Option<f64>,
     destroyed: bool,
     close_requested: bool,
+    step_start: Option<Instant>,
+    step_duration: Option<Duration>,
 }
 
 impl Default for WinitInputHelper {
@@ -47,6 +49,8 @@ impl WinitInputHelper {
             scale_factor: None,
             destroyed: false,
             close_requested: false,
+            step_start: None,
+            step_duration : None,
         }
     }
 
@@ -71,7 +75,10 @@ impl WinitInputHelper {
                 self.process_device_event(event);
                 false
             }
-            Event::AboutToWait => true,
+            Event::AboutToWait => {
+                self.end_step();
+                true
+            },
             _ => false,
         }
     }
@@ -89,6 +96,7 @@ impl WinitInputHelper {
         for event in events {
             self.process_window_event(event);
         }
+        self.end_step();
     }
 
     fn step(&mut self) {
@@ -96,6 +104,8 @@ impl WinitInputHelper {
         self.window_resized = None;
         self.scale_factor_changed = None;
         self.close_requested = false;
+        self.step_start.get_or_insert(Instant::now());
+        self.step_duration = None;
         if let Some(current) = &mut self.current {
             current.step();
         }
@@ -131,6 +141,11 @@ impl WinitInputHelper {
         if let Some(ref mut current) = self.current {
             current.handle_device_event(event);
         }
+    }
+
+    fn end_step(&mut self) {
+        self.step_duration = self.step_start.map(|start| start.elapsed());
+        self.step_start = Some(Instant::now());
     }
 
     /// Returns true when the key with the specified keycode goes from "not pressed" to "pressed".
@@ -444,5 +459,11 @@ impl WinitInputHelper {
     #[deprecated(note = "Instead use `input.close_requested() || input.destroyed()`")]
     pub fn quit(&self) -> bool {
         self.close_requested || self.destroyed
+    }
+
+    /// Returns the `std::time::Duration` elapsed since the last step.
+    /// Returns `None` if the step is still in progress.
+    pub fn delta_time(&self) -> Option<Duration> {
+        self.step_duration
     }
 }
