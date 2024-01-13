@@ -107,6 +107,7 @@ impl WinitInputHelper {
         self.window_resized = None;
         self.scale_factor_changed = None;
         self.close_requested = false;
+        // Set the start time on the first event to avoid the first step appearing too long
         self.step_start.get_or_insert(Instant::now());
         self.step_duration = None;
         if let Some(current) = &mut self.current {
