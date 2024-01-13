@@ -3,7 +3,10 @@ use winit::event::{DeviceEvent, Event, WindowEvent};
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar};
-use std::{path::PathBuf, time::{Instant, Duration}};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 /// The main struct of the API.
 ///
@@ -50,7 +53,7 @@ impl WinitInputHelper {
             destroyed: false,
             close_requested: false,
             step_start: None,
-            step_duration : None,
+            step_duration: None,
         }
     }
 
@@ -78,7 +81,7 @@ impl WinitInputHelper {
             Event::AboutToWait => {
                 self.end_step();
                 true
-            },
+            }
             _ => false,
         }
     }
