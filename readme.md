@@ -27,7 +27,7 @@ fn main() {
 
     event_loop
         .run(move |event, elwt| {
-            // Pass every event to the WindowInputHelper.
+            // Pass every event to the WinitInputHelper.
             // It will return true when the last event has been processed and it is time to run your application logic.
             if input.update(&event) {
                 if input.key_released(KeyCode::KeyQ) || input.close_requested() || input.destroyed()
