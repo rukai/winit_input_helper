@@ -3,10 +3,8 @@ use winit::event::{DeviceEvent, Event, WindowEvent};
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar};
-use std::{
-    path::PathBuf,
-    time::{Duration, Instant},
-};
+use std::{path::PathBuf, time::Duration};
+use web_time::Instant;
 
 /// The main struct of the API.
 ///
