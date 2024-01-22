@@ -1,11 +1,12 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{DeviceEvent, Event, WindowEvent};
+use winit::event::{DeviceEvent, Event, MouseButton, WindowEvent};
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
-use crate::current_input::{CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar};
+use crate::current_input::{
+    mouse_button_to_int, CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar,
+};
 use std::{path::PathBuf, time::Duration};
 use web_time::Instant;
-
 /// The main struct of the API.
 ///
 /// Create with `WinitInputHelper::new`.
@@ -304,17 +305,11 @@ impl WinitInputHelper {
 
     /// Returns true when the specified mouse button goes from "not pressed" to "pressed".
     /// Otherwise returns false.
-    ///
-    /// Left   => 0
-    /// Right  => 1
-    /// Middle => 2
-    /// Other  => 3..255
-    pub fn mouse_pressed(&self, check_mouse_button: usize) -> bool {
-        // TODO: Take MouseButton instead of usize
+    pub fn mouse_pressed(&self, mouse_button: MouseButton) -> bool {
         if let Some(current) = &self.current {
             for action in &current.mouse_actions {
                 if let MouseAction::Pressed(key_code) = *action {
-                    if key_code == check_mouse_button {
+                    if key_code == mouse_button {
                         return true;
                     }
                 }
@@ -325,17 +320,11 @@ impl WinitInputHelper {
 
     /// Returns true when the specified mouse button goes from "pressed" to "not pressed".
     /// Otherwise returns false.
-    ///
-    /// Left   => 0
-    /// Right  => 1
-    /// Middle => 2
-    /// Other  => 3..255
-    pub fn mouse_released(&self, check_mouse_button: usize) -> bool {
-        // TODO: Take MouseButton instead of usize
+    pub fn mouse_released(&self, mouse_button: MouseButton) -> bool {
         if let Some(current) = &self.current {
             for action in &current.mouse_actions {
                 if let MouseAction::Released(key_code) = *action {
-                    if key_code == check_mouse_button {
+                    if key_code == mouse_button {
                         return true;
                     }
                 }
@@ -346,15 +335,9 @@ impl WinitInputHelper {
 
     /// Returns true while the specified mouse button remains "pressed".
     /// Otherwise returns false.
-    ///
-    /// Left   => 0
-    /// Right  => 1
-    /// Middle => 2
-    /// Other  => 3..255
-    pub fn mouse_held(&self, mouse_button: usize) -> bool {
-        // TODO: Take MouseButton instead of usize
+    pub fn mouse_held(&self, mouse_button: MouseButton) -> bool {
         match &self.current {
-            Some(current) => current.mouse_held[mouse_button],
+            Some(current) => current.mouse_held[mouse_button_to_int(&mouse_button)],
             None => false,
         }
     }
