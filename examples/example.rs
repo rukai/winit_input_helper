@@ -1,6 +1,7 @@
 //! A complex example demonstrating use of every API feature, runs on both desktop and web.
 //! To run on desktop: `cargo run --example example`
 //! To run on web: `cargo run-wasm --example example`
+use winit::event::MouseButton;
 use winit::event_loop::EventLoop;
 use winit::keyboard::{Key, KeyCode};
 use winit_input_helper::WinitInputHelper;
@@ -77,6 +78,22 @@ fn main() {
                 if scroll_diff != (0.0, 0.0) {
                     log::info!("The scroll diff is: {:?}", scroll_diff);
                 }
+
+
+                for button in [MouseButton::Left, MouseButton::Right, MouseButton::Middle] {
+                    if input.mouse_pressed(button) {
+                        log::info!("The {:?} mouse button was pressed", button);
+                    }
+
+                    if input.mouse_held(button) {
+                        log::info!("The {:?} mouse button is being held", button);
+                    }
+
+                    if input.mouse_released(button) {
+                        log::info!("The {:?} mouse button was released", button);
+                    }
+                }
+
 
                 // You are expected to control your own timing within this block.
                 // Usually via rendering with vsync.

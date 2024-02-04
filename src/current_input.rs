@@ -105,18 +105,18 @@ impl CurrentInput {
                 button,
                 ..
             } => {
-                let button = mouse_button_to_int(button);
-                self.mouse_held[button] = true;
-                self.mouse_actions.push(MouseAction::Pressed(button));
+                let button_usize = mouse_button_to_int(button);
+                self.mouse_held[button_usize] = true;
+                self.mouse_actions.push(MouseAction::Pressed(*button));
             }
             WindowEvent::MouseInput {
                 state: ElementState::Released,
                 button,
                 ..
             } => {
-                let button = mouse_button_to_int(button);
-                self.mouse_held[button] = false;
-                self.mouse_actions.push(MouseAction::Released(button));
+                let button_usize = mouse_button_to_int(button);
+                self.mouse_held[button_usize] = false;
+                self.mouse_actions.push(MouseAction::Released(*button));
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 // I just took this from three-rs, no idea why this magic number was chosen ¯\_(ツ)_/¯
@@ -163,17 +163,17 @@ pub enum ScanCodeAction {
 
 #[derive(Clone)]
 pub enum MouseAction {
-    Pressed(usize),
-    Released(usize),
+    Pressed(MouseButton),
+    Released(MouseButton),
 }
 
-fn mouse_button_to_int(button: &MouseButton) -> usize {
+pub fn mouse_button_to_int(button: &MouseButton) -> usize {
     match button {
         MouseButton::Left => 0,
         MouseButton::Right => 1,
         MouseButton::Middle => 2,
         MouseButton::Back => 3,
-        MouseButton::Forward => 3,
-        MouseButton::Other(byte) => *byte as usize,
+        MouseButton::Forward => 4,
+        MouseButton::Other(byte) => 5 + *byte as usize,
     }
 }
