@@ -1,17 +1,5 @@
 use winit::event::{DeviceEvent, ElementState, MouseButton, MouseScrollDelta, WindowEvent};
-use winit::keyboard::{Key, NamedKey, PhysicalKey};
-
-/// Stores a character or a backspace.
-///
-/// TODO: Either:
-///  *   remove this struct and just use backspace character instead
-///  *   move keypresses like Home, End, Left, Right, Up, Down, Return to this enum
-///  (advantage of using this struct is it retains sub-frame keypress ordering)
-#[derive(Clone)]
-pub enum TextChar {
-    Char(char),
-    Back,
-}
+use winit::keyboard::{Key, PhysicalKey};
 
 #[derive(Clone)]
 pub struct CurrentInput {
@@ -26,7 +14,7 @@ pub struct CurrentInput {
     pub mouse_diff: Option<(f32, f32)>,
     pub y_scroll_diff: f32,
     pub x_scroll_diff: f32,
-    pub text: Vec<TextChar>,
+    pub text: Vec<Key>,
 }
 
 impl CurrentInput {
@@ -71,9 +59,7 @@ impl CurrentInput {
                     self.key_held.push(logical_key.clone());
                     self.key_actions
                         .push(KeyAction::PressedOs(logical_key.clone()));
-                    if let Key::Named(NamedKey::Backspace) = logical_key {
-                        self.text.push(TextChar::Back);
-                    }
+                    self.text.push(logical_key.clone());
 
                     let physical_key = &event.physical_key;
                     if !self.scancode_held.contains(physical_key) {

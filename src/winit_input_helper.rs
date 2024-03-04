@@ -3,7 +3,7 @@ use winit::event::{DeviceEvent, Event, MouseButton, WindowEvent};
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{
-    mouse_button_to_int, CurrentInput, KeyAction, MouseAction, ScanCodeAction, TextChar,
+    mouse_button_to_int, CurrentInput, KeyAction, MouseAction, ScanCodeAction,
 };
 use std::{path::PathBuf, time::Duration};
 use web_time::Instant;
@@ -390,11 +390,11 @@ impl WinitInputHelper {
     }
 
     /// Returns the characters pressed during the last step.
-    /// The earlier the character was pressed, the lower the index in the Vec.
-    pub fn text(&self) -> Vec<TextChar> {
+    /// The characters are in the order they were pressed.
+    pub fn text(&self) -> &[Key] {
         match &self.current {
-            Some(current) => current.text.clone(),
-            None => vec![],
+            Some(current) => &current.text,
+            None => &[],
         }
     }
 
