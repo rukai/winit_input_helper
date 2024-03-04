@@ -1854,7 +1854,7 @@ dependencies = [
 
 [[package]]
 name = "winit_input_helper"
-version = "0.15.3"
+version = "0.16.0"
 dependencies = [
  "console_error_panic_hook",
  "console_log",
