@@ -440,12 +440,6 @@ impl WinitInputHelper {
         self.close_requested
     }
 
-    /// Deprecated
-    #[deprecated(note = "Instead use `input.close_requested() || input.destroyed()`")]
-    pub fn quit(&self) -> bool {
-        self.close_requested || self.destroyed
-    }
-
     /// Returns the `std::time::Duration` elapsed since the last step.
     /// Returns `None` if the step is still in progress.
     pub fn delta_time(&self) -> Option<Duration> {
