@@ -1,5 +1,7 @@
+use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
-use winit::event::{DeviceEvent, Event, MouseButton, WindowEvent};
+use winit::event::{DeviceEvent, MouseButton, WindowEvent};
+use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{
@@ -7,19 +9,7 @@ use crate::current_input::{
 };
 use std::{path::PathBuf, time::Duration};
 use web_time::Instant;
-/// The main struct of the API.
-///
-/// Create with `WinitInputHelper::new`.
-/// Call `WinitInputHelper::update` for every `winit::event::Event` you receive from winit.
-/// `WinitInputHelper::update` returning true indicates a step has occured.
-/// You should now run your application logic, calling any of the accessor methods you need.
-///
-/// An alternative API is provided via `WinitInputHelper::step_with_window_events`,
-/// call this method instead of `WinitInputHelper::update` if you need to manually control when a new step begins.
-/// A step occurs every time this method is called.
-///
-/// Do not mix usages of `WinitInputHelper::update` and `WinitInputHelper::step_with_window_events`.
-/// You should stick to one or the other.
+
 #[derive(Clone)]
 pub struct WinitInputHelper {
     current: Option<CurrentInput>,
@@ -40,6 +30,106 @@ impl Default for WinitInputHelper {
     }
 }
 
+/// The main struct of the API. Assumes a single window application.
+///
+/// Create with `WinitInputApplicationHandler::new(your application)`.
+/// Your application logic should run in `update` events, which get triggered whenever `RedrawRequested` is received.
+///
+/// An alternative API is provided via `WinitInputHelper::step_with_window_events`,
+/// call this method instead of `WinitInputHelper::update` if you need to manually control when a new step begins.
+/// A step occurs every time this method is called.
+///
+/// Do not mix usages of `WinitInputApplicationHandler` and `WinitInputHelper::step_with_window_events`.
+/// You should stick to one or the other.
+pub struct WinitInputApp<Application> {
+    pub input: WinitInputHelper,
+    pub application: Application,
+}
+
+impl<Application> WinitInputApp<Application> {
+    pub fn new(application: Application) -> Self
+    where
+        Application: WinitInputUpdate,
+    {
+        Self {
+            input: WinitInputHelper::new(),
+            application,
+        }
+    }
+}
+
+pub trait WinitInputUpdate {
+    fn update(&mut self, event_loop: &ActiveEventLoop, input: &WinitInputHelper);
+}
+
+impl<Application, U> ApplicationHandler<U> for WinitInputApp<Application>
+where
+    Application: ApplicationHandler<U> + WinitInputUpdate,
+    U: 'static,
+{
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        self.application.resumed(event_loop);
+    }
+
+    fn new_events(&mut self, event_loop: &ActiveEventLoop, cause: winit::event::StartCause) {
+        self.application.new_events(event_loop, cause);
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        self.application.about_to_wait(event_loop);
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        window_id: winit::window::WindowId,
+        event: WindowEvent,
+    ) {
+        let is_redraw = matches!(event, WindowEvent::RedrawRequested);
+        if is_redraw {
+            self.input.end_step_time();
+            self.application.update(event_loop, &self.input);
+        }
+        self.input.process_window_event(&event);
+        self.application.window_event(event_loop, window_id, event);
+        if is_redraw {
+            self.input.step();
+        }
+    }
+
+    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: U) {
+        self.application.user_event(event_loop, event);
+    }
+
+    fn device_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        device_id: winit::event::DeviceId,
+        event: DeviceEvent,
+    ) {
+        self.input.process_device_event(&event);
+        self.application.device_event(event_loop, device_id, event);
+    }
+
+    fn suspended(&mut self, event_loop: &ActiveEventLoop) {
+        self.input.end_step_time(); // End the step time before suspending
+        self.application.suspended(event_loop);
+    }
+
+    fn exiting(&mut self, event_loop: &ActiveEventLoop) {
+        self.application.exiting(event_loop);
+    }
+
+    fn memory_warning(&mut self, event_loop: &ActiveEventLoop) {
+        self.application.memory_warning(event_loop);
+    }
+}
+
+/// The following winit events are handled:
+/// *   `Event::NewEvents` clears all internal state.
+/// *   `Event::MainEventsCleared` causes this function to return true, signifying a "step" has completed.
+/// *   `Event::WindowEvent` updates internal state, this will affect the result of accessor methods immediately.
+/// *   `Event::DeviceEvent` updates value of `mouse_diff()`
 impl WinitInputHelper {
     pub fn new() -> WinitInputHelper {
         WinitInputHelper {
@@ -56,35 +146,6 @@ impl WinitInputHelper {
         }
     }
 
-    /// Pass every winit event to this function and run your application logic when it returns true.
-    ///
-    /// The following winit events are handled:
-    /// *   `Event::NewEvents` clears all internal state.
-    /// *   `Event::MainEventsCleared` causes this function to return true, signifying a "step" has completed.
-    /// *   `Event::WindowEvent` updates internal state, this will affect the result of accessor methods immediately.
-    /// *   `Event::DeviceEvent` updates value of `mouse_diff()`
-    pub fn update<T>(&mut self, event: &Event<T>) -> bool {
-        match &event {
-            Event::NewEvents(_) => {
-                self.step();
-                false
-            }
-            Event::WindowEvent { event, .. } => {
-                self.process_window_event(event);
-                false
-            }
-            Event::DeviceEvent { event, .. } => {
-                self.process_device_event(event);
-                false
-            }
-            Event::AboutToWait => {
-                self.end_step();
-                true
-            }
-            _ => false,
-        }
-    }
-
     /// Pass a slice containing every winit event that occured within the step to this function.
     /// Ensure this method is only called once per application main loop.
     /// Ensure every event since the last `WinitInputHelper::step_with_window_events` call is included in the `events` argument.
@@ -98,7 +159,7 @@ impl WinitInputHelper {
         for event in events {
             self.process_window_event(event);
         }
-        self.end_step();
+        self.end_step_time();
     }
 
     fn step(&mut self) {
@@ -146,7 +207,7 @@ impl WinitInputHelper {
         }
     }
 
-    fn end_step(&mut self) {
+    fn end_step_time(&mut self) {
         self.step_duration = self.step_start.map(|start| start.elapsed());
         self.step_start = Some(Instant::now());
     }

@@ -2,6 +2,28 @@
 
 This changelog is written with the goal of helping you through breaking changes rather than being a complete documentation of every change in the release.
 
+## 0.17
+
+Upgraded to winit 0.30. Overhauled the API to be an `ApplicationHandler` wrapper.
+
+```rust
+// Old
+let mut input = WinitInputHelper::new();
+event_loop
+        .run(move |event, elwt| {
+            if input.update(&event) {
+              ...
+// New
+let mut winit_input = WinitInputApplicationHandler::new(your_application_handler);
+event_loop.run_app(&mut winit_input).unwrap();
+
+impl WinitInputUpdate for State {
+    fn update(&mut self, event_loop: &ActiveEventLoop, input: &WinitInputHelper) {
+       ...
+    }
+}
+```
+
 ## 0.16
 
 * `WinitInputHelper::quit` is removed, instead use `input.close_requested() || input.destroyed()` for an equivalent check
