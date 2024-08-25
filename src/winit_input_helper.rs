@@ -1,5 +1,5 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{DeviceEvent, Event, MouseButton, WindowEvent};
+use winit::event::{DeviceEvent, MouseButton, WindowEvent};
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{
@@ -56,40 +56,12 @@ impl WinitInputHelper {
         }
     }
 
-    /// Pass every winit event to this function and run your application logic when it returns true.
-    ///
-    /// The following winit events are handled:
-    /// *   `Event::NewEvents` clears all internal state.
-    /// *   `Event::MainEventsCleared` causes this function to return true, signifying a "step" has completed.
-    /// *   `Event::WindowEvent` updates internal state, this will affect the result of accessor methods immediately.
-    /// *   `Event::DeviceEvent` updates value of `mouse_diff()`
-    pub fn update<T>(&mut self, event: &Event<T>) -> bool {
-        match &event {
-            Event::NewEvents(_) => {
-                self.step();
-                false
-            }
-            Event::WindowEvent { event, .. } => {
-                self.process_window_event(event);
-                false
-            }
-            Event::DeviceEvent { event, .. } => {
-                self.process_device_event(event);
-                false
-            }
-            Event::AboutToWait => {
-                self.end_step();
-                true
-            }
-            _ => false,
-        }
-    }
-
     /// Pass a slice containing every winit event that occured within the step to this function.
     /// Ensure this method is only called once per application main loop.
     /// Ensure every event since the last `WinitInputHelper::step_with_window_events` call is included in the `events` argument.
     ///
-    /// `WinitInputHelper::Update` is easier to use.
+    /// Controlling usage with
+    /// `WinitInputHelper::step`, `window_event`, `device_event` and `end_step` is easier.
     /// But this method is useful when your application logic steps dont line up with winit's event loop.
     /// e.g. you have a seperate thread for application logic using WinitInputHelper that constantly
     /// runs regardless of winit's event loop and you need to send events to it directly.
@@ -101,7 +73,7 @@ impl WinitInputHelper {
         self.end_step();
     }
 
-    fn step(&mut self) {
+    pub fn step(&mut self) {
         self.dropped_file = None;
         self.window_resized = None;
         self.scale_factor_changed = None;
@@ -114,7 +86,7 @@ impl WinitInputHelper {
         }
     }
 
-    fn process_window_event(&mut self, event: &WindowEvent) {
+    pub fn process_window_event(&mut self, event: &WindowEvent) {
         match event {
             WindowEvent::CloseRequested => self.close_requested = true,
             WindowEvent::Destroyed => self.destroyed = true,
@@ -140,13 +112,13 @@ impl WinitInputHelper {
         }
     }
 
-    fn process_device_event(&mut self, event: &DeviceEvent) {
+    pub fn process_device_event(&mut self, event: &DeviceEvent) {
         if let Some(ref mut current) = self.current {
             current.handle_device_event(event);
         }
     }
 
-    fn end_step(&mut self) {
+    pub fn end_step(&mut self) {
         self.step_duration = self.step_start.map(|start| start.elapsed());
         self.step_start = Some(Instant::now());
     }
