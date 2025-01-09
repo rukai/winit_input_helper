@@ -153,7 +153,7 @@ mod platform {
         let window = event_loop.create_window(window_attrs).unwrap();
 
         // Set a background color for the canvas to make it easier to tell the where the canvas is for debugging purposes.
-        let canvas = window.cavas().unwrap();
+        let canvas = window.canvas().unwrap();
         canvas.style().set_css_text(
             "display: block; background-color: crimson; margin: auto; width: 50%; aspect-ratio: 4 / 2;",
         );
