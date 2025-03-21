@@ -2,6 +2,16 @@
 
 This changelog is written with the goal of helping you through breaking changes rather than being a complete documentation of every change in the release.
 
+## 0.17
+
+Upgraded to winit 0.30.
+Winit 0.30 overhauled the event loop -- now everything occurs through the ApplicationHandler.
+Now rather than simply calling WinitInputHandler.update(), you have to call 4 different functions: .process_window_event(), .process_device_event(), .process_new_events(), and .process_about_to_wait(), each in the corresponding function within ApplicationHandler.
+
+The recommendations this crate gives about where to render and run your application logic have also been updated to match new guidance.
+As update() has been removed, it no longer returns true when you should run application logic. Instead, run your application logic _after_ calling .process_about_to_wait() in ApplicationHandler::about_to_wait().
+Run rendering code in ApplicationHandler::window_event() only when .process_window_event() returns true, indicating it received a RequestedRedraw event (it doesn't care about which window was requested, but if you do, you'll have to handle it yourself.)
+
 ## 0.16
 
 * `WinitInputHelper::quit` is removed, instead use `input.close_requested() || input.destroyed()` for an equivalent check

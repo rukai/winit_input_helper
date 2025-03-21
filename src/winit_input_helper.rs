@@ -1,5 +1,5 @@
 use winit::dpi::PhysicalSize;
-use winit::event::{DeviceEvent, Event, MouseButton, WindowEvent};
+use winit::event::{DeviceEvent, MouseButton, WindowEvent};
 use winit::keyboard::{Key, KeyCode, PhysicalKey};
 
 use crate::current_input::{
@@ -10,9 +10,14 @@ use web_time::Instant;
 /// The main struct of the API.
 ///
 /// Create with `WinitInputHelper::new`.
-/// Call `WinitInputHelper::update` for every `winit::event::Event` you receive from winit.
-/// `WinitInputHelper::update` returning true indicates a step has occured.
-/// You should now run your application logic, calling any of the accessor methods you need.
+/// Call `WinitInputHelper::process_window_event()` for every window event you recieve in ApplicationHandler.window_event()
+/// Call `WinitInputHelper::process_device_event()` every time ApplicationHandler.device_event() is called.
+/// Call `WinitInputHelper::process_new_events()` every time ApplicationHandler.new_events() is called.
+/// Call `WinitInputHelper::process_about_to_wait()` every time ApplicationHandler.about_to_wait() is called.
+/// It is crucial that you call all of these functions every time they are required to be called; failing to call new_events() or about_to_wait() will break the separation between frames, and failing to call device_event() will prevent mouse motion from being detected in some cases.
+/// `WinitInputHelper::process_window_event()` returning true indicates a RequestedRedraw event was received, and that you should render.
+/// You should be running your application logic only in ApplicationHandler.about_to_wait(), calling any of the accessor methods you need.
+/// All the window events should have been registered beforehand by calls of `WinitInputHelper::process_window_event()`.
 ///
 /// An alternative API is provided via `WinitInputHelper::step_with_window_events`,
 /// call this method instead of `WinitInputHelper::update` if you need to manually control when a new step begins.
@@ -56,35 +61,6 @@ impl WinitInputHelper {
         }
     }
 
-    /// Pass every winit event to this function and run your application logic when it returns true.
-    ///
-    /// The following winit events are handled:
-    /// *   `Event::NewEvents` clears all internal state.
-    /// *   `Event::MainEventsCleared` causes this function to return true, signifying a "step" has completed.
-    /// *   `Event::WindowEvent` updates internal state, this will affect the result of accessor methods immediately.
-    /// *   `Event::DeviceEvent` updates value of `mouse_diff()`
-    pub fn update<T>(&mut self, event: &Event<T>) -> bool {
-        match &event {
-            Event::NewEvents(_) => {
-                self.step();
-                false
-            }
-            Event::WindowEvent { event, .. } => {
-                self.process_window_event(event);
-                false
-            }
-            Event::DeviceEvent { event, .. } => {
-                self.process_device_event(event);
-                false
-            }
-            Event::AboutToWait => {
-                self.end_step();
-                true
-            }
-            _ => false,
-        }
-    }
-
     /// Pass a slice containing every winit event that occured within the step to this function.
     /// Ensure this method is only called once per application main loop.
     /// Ensure every event since the last `WinitInputHelper::step_with_window_events` call is included in the `events` argument.
@@ -114,7 +90,27 @@ impl WinitInputHelper {
         }
     }
 
-    fn process_window_event(&mut self, event: &WindowEvent) {
+    /// Call every time ApplicationHandler.new_events() is called.
+    /// Clears all internal state.
+    pub fn process_new_events(&mut self) {
+        self.step();
+    }
+
+    // Call every time ApplicationHandler.about_to_wait() is called.
+    // Update your application logic _after_ you call this function.
+    pub fn process_about_to_wait(&mut self) {
+        self.end_step();
+    }
+
+    /// Call every time ApplicationHandler.window_event() is called.
+    /// Updates internal state, this will affect the result of accessor methods immediately.
+    /// You should render your application only when this function returns true, which is exactly and only when a RedrawRequested event is received.
+    /// If you want to render every frame, call window.request_redraw() on the relevant window every time ApplicationHandler.about_to_wait() is called.
+    /// For more information on when to render, see Window::request_redraw() in the winit docs.
+    /// It is important to note that this method does not care which window the RedrawRequested event comes from (i.e. the WindowId). If you want to only redraw the window that was requested to be redrawn, you should check for RedrawRequested events yourself.
+    pub fn process_window_event(&mut self, event: &WindowEvent) -> bool {
+        let mut received_redraw_request = false;
+
         match event {
             WindowEvent::CloseRequested => self.close_requested = true,
             WindowEvent::Destroyed => self.destroyed = true,
@@ -133,14 +129,20 @@ impl WinitInputHelper {
                 self.scale_factor_changed = Some(*scale_factor);
                 self.scale_factor = Some(*scale_factor);
             }
+            WindowEvent::RedrawRequested => {
+                received_redraw_request = true;
+            }
             _ => {}
         }
         if let Some(current) = &mut self.current {
             current.handle_event(event);
         }
+        return received_redraw_request;
     }
 
-    fn process_device_event(&mut self, event: &DeviceEvent) {
+    /// Call every time ApplicationHandler.device_event() is called.
+    /// Updates value of `mouse_diff()`.
+    pub fn process_device_event(&mut self, event: &DeviceEvent) {
         if let Some(ref mut current) = self.current {
             current.handle_device_event(event);
         }
