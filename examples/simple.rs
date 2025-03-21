@@ -42,7 +42,7 @@ impl ApplicationHandler for App {
         self.winit_input_helper.process_device_event(&event);
     }
     fn about_to_wait(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
-        self.winit_input_helper.process_about_to_wait();
+        self.winit_input_helper.end_step();
 
         // We do not call window.request_redraw() here because we have nothing to render anyways
     }
@@ -51,7 +51,7 @@ impl ApplicationHandler for App {
         _event_loop: &winit::event_loop::ActiveEventLoop,
         _cause: winit::event::StartCause,
     ) {
-        self.winit_input_helper.process_new_events();
+        self.winit_input_helper.step();
     }
 }
 fn main() {

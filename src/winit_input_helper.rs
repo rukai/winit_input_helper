@@ -77,7 +77,9 @@ impl WinitInputHelper {
         self.end_step();
     }
 
-    fn step(&mut self) {
+    /// Call every time ApplicationHandler.new_events() is called.
+    /// Clears all internal state.
+    pub fn step(&mut self) {
         self.dropped_file = None;
         self.window_resized = None;
         self.scale_factor_changed = None;
@@ -88,18 +90,6 @@ impl WinitInputHelper {
         if let Some(current) = &mut self.current {
             current.step();
         }
-    }
-
-    /// Call every time ApplicationHandler.new_events() is called.
-    /// Clears all internal state.
-    pub fn process_new_events(&mut self) {
-        self.step();
-    }
-
-    // Call every time ApplicationHandler.about_to_wait() is called.
-    // Update your application logic _after_ you call this function.
-    pub fn process_about_to_wait(&mut self) {
-        self.end_step();
     }
 
     /// Call every time ApplicationHandler.window_event() is called.
@@ -148,7 +138,9 @@ impl WinitInputHelper {
         }
     }
 
-    fn end_step(&mut self) {
+    // Call every time ApplicationHandler.about_to_wait() is called.
+    // Update your application logic _after_ you call this function.
+    pub fn end_step(&mut self) {
         self.step_duration = self.step_start.map(|start| start.elapsed());
         self.step_start = Some(Instant::now());
     }
