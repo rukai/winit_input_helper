@@ -10,7 +10,7 @@ Now rather than simply calling WinitInputHandler.update(), you have to call 4 di
 
 The recommendations this crate gives about where to render and run your application logic have also been updated to match new guidance.
 As update() has been removed, it no longer returns true when you should run application logic. Instead, run your application logic _after_ calling .process_about_to_wait() in ApplicationHandler::about_to_wait().
-Run rendering code in ApplicationHandler::window_event() only when .process_window_event() returns true, indicating it received a RequestedRedraw event (it doesn't care about which window was requested, but if you do, you'll have to handle it yourself.)
+Run rendering code in ApplicationHandler::window_event() only when .process_window_event() returns true, indicating it received a RequestedRedraw event. It doesn't care about which window was requested to be redrawn, but if you do, you'll have to handle it yourself. If you want to render every frame, remember to call Window::request_redraw() in ApplicationHandler::about_to_wait() every time.
 
 ## 0.16
 
