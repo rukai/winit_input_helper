@@ -6,4 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cargo-run-wasm = "0.3.0"
+cargo-run-wasm = "0.4.0"
+wasm-bindgen = "=0.2.100" # latest release is busted with cryptic linking error
