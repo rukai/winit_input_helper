@@ -1,17 +1,57 @@
 //! The simplest example, supporting only desktop applications.
 
 use winit::application::ApplicationHandler;
-use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::Window;
+use winit::event::{DeviceEvent, DeviceId, StartCause, WindowEvent};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::KeyCode;
+use winit::window::{Window, WindowId};
 use winit_input_helper::WinitInputHelper;
 
 struct App {
     window: Option<Window>,
-    winit_input_helper: WinitInputHelper,
+    input: WinitInputHelper,
 }
+
 impl ApplicationHandler for App {
-    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        if let None = self.window {
+    fn window_event(&mut self, _: &ActiveEventLoop, _: WindowId, event: WindowEvent) {
+        // Pass every event to the WinitInputHelper.
+        // It will return true if it receives a RequestedRedraw event: you should then render.
+        if self.input.process_window_event(&event) {
+            // render();
+
+            // If you want to render every frame, remember to call window.request_redraw() in ApplicationHandler.about_to_wait().
+        }
+    }
+
+    fn device_event(&mut self, _: &ActiveEventLoop, _: DeviceId, event: DeviceEvent) {
+        self.input.process_device_event(&event);
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        self.input.end_step();
+
+        // We do not call window.request_redraw() here because we have nothing to render anyways
+
+        if self.input.key_released(KeyCode::KeyQ)
+            || self.input.close_requested()
+            || self.input.destroyed()
+        {
+            println!("The application was requsted to close or the 'Q' key was pressed, quiting the application");
+            event_loop.exit();
+            return;
+        }
+
+        if self.input.key_pressed(KeyCode::KeyW) {
+            println!("The 'W' key (US layout) was pressed on the keyboard");
+        }
+    }
+
+    fn new_events(&mut self, _: &ActiveEventLoop, _: StartCause) {
+        self.input.step();
+    }
+
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        if self.window.is_none() {
             self.window = Some(
                 event_loop
                     .create_window(Window::default_attributes())
@@ -19,45 +59,9 @@ impl ApplicationHandler for App {
             );
         }
     }
-    fn window_event(
-        &mut self,
-        _event_loop: &winit::event_loop::ActiveEventLoop,
-        _window_id: winit::window::WindowId,
-        event: winit::event::WindowEvent,
-    ) {
-        // Pass every event to the WinitInputHelper.
-        // It will return true if it receives a RequestedRedraw event: you should then render.
-        if self.winit_input_helper.process_window_event(&event) {
-            // render();
-
-            // If you want to render every frame, remember to call window.request_redraw() in ApplicationHandler.about_to_wait().
-        }
-    }
-    fn device_event(
-        &mut self,
-        _event_loop: &winit::event_loop::ActiveEventLoop,
-        _device_id: winit::event::DeviceId,
-        event: winit::event::DeviceEvent,
-    ) {
-        self.winit_input_helper.process_device_event(&event);
-    }
-    fn about_to_wait(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
-        self.winit_input_helper.end_step();
-
-        // We do not call window.request_redraw() here because we have nothing to render anyways
-    }
-    fn new_events(
-        &mut self,
-        _event_loop: &winit::event_loop::ActiveEventLoop,
-        _cause: winit::event::StartCause,
-    ) {
-        self.winit_input_helper.step();
-    }
 }
-fn main() {
-    // WinitInputHelper is initialized once at the start of the app
-    let winit_input_helper = WinitInputHelper::new();
 
+fn main() {
     // Create an event loop, initialize the app, and run it
     // Immediately, .resume() will be called
     // Then, every window event will trigger a .window_event() call
@@ -67,7 +71,7 @@ fn main() {
     event_loop.set_control_flow(ControlFlow::Poll);
     event_loop
         .run_app(&mut App {
-            winit_input_helper,
+            input: WinitInputHelper::new(),
             window: None,
         })
         .unwrap();

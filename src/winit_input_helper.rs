@@ -10,21 +10,20 @@ use web_time::Instant;
 /// The main struct of the API.
 ///
 /// Create with `WinitInputHelper::new`.
-/// Call `WinitInputHelper::process_window_event()` for every window event you recieve in ApplicationHandler.window_event()
-/// Call `WinitInputHelper::process_device_event()` every time ApplicationHandler.device_event() is called.
-/// Call `WinitInputHelper::process_new_events()` every time ApplicationHandler.new_events() is called.
-/// Call `WinitInputHelper::process_about_to_wait()` every time ApplicationHandler.about_to_wait() is called.
-/// It is crucial that you call all of these functions every time they are required to be called; failing to call new_events() or about_to_wait() will break the separation between frames, and failing to call device_event() will prevent mouse motion from being detected in some cases.
+/// * Call `WinitInputHelper::process_window_event()` for every window event you recieve in ApplicationHandler.window_event()
+/// * Call `WinitInputHelper::process_device_event()` every time ApplicationHandler.device_event() is called.
+/// * Call `WinitInputHelper::step()` every time ApplicationHandler.new_events() is called.
+/// * Call `WinitInputHelper::end_step()` every time ApplicationHandler.about_to_wait() is called.
+///
+/// It is crucial that you call all of these functions every time they are required to be called:
+///
+/// * failing to call `new_events()` or `about_to_wait()` will break the separation between frames
+/// * failing to call device_event() will prevent mouse motion from being detected in some cases.
+///
 /// `WinitInputHelper::process_window_event()` returning true indicates a RequestedRedraw event was received, and that you should render.
-/// You should be running your application logic only in ApplicationHandler.about_to_wait(), calling any of the accessor methods you need.
+///
+/// You should be running your application logic only in `ApplicationHandler.about_to_wait()`, calling any of the accessor methods you need.
 /// All the window events should have been registered beforehand by calls of `WinitInputHelper::process_window_event()`.
-///
-/// An alternative API is provided via `WinitInputHelper::step_with_window_events`,
-/// call this method instead of `WinitInputHelper::update` if you need to manually control when a new step begins.
-/// A step occurs every time this method is called.
-///
-/// Do not mix usages of `WinitInputHelper::update` and `WinitInputHelper::step_with_window_events`.
-/// You should stick to one or the other.
 #[derive(Clone)]
 pub struct WinitInputHelper {
     current: Option<CurrentInput>,
@@ -59,22 +58,6 @@ impl WinitInputHelper {
             step_start: None,
             step_duration: None,
         }
-    }
-
-    /// Pass a slice containing every winit event that occured within the step to this function.
-    /// Ensure this method is only called once per application main loop.
-    /// Ensure every event since the last `WinitInputHelper::step_with_window_events` call is included in the `events` argument.
-    ///
-    /// `WinitInputHelper::Update` is easier to use.
-    /// But this method is useful when your application logic steps dont line up with winit's event loop.
-    /// e.g. you have a seperate thread for application logic using WinitInputHelper that constantly
-    /// runs regardless of winit's event loop and you need to send events to it directly.
-    pub fn step_with_window_events(&mut self, events: &[WindowEvent]) {
-        self.step();
-        for event in events {
-            self.process_window_event(event);
-        }
-        self.end_step();
     }
 
     /// Call every time ApplicationHandler.new_events() is called.
@@ -127,7 +110,7 @@ impl WinitInputHelper {
         if let Some(current) = &mut self.current {
             current.handle_event(event);
         }
-        return received_redraw_request;
+        received_redraw_request
     }
 
     /// Call every time ApplicationHandler.device_event() is called.
@@ -371,9 +354,6 @@ impl WinitInputHelper {
     /// Returns the change in mouse coordinates that occured during the last step.
     ///
     /// This is useful when implementing first person controls with a captured mouse.
-    ///
-    /// Because this uses `DeviceEvent`s, the `step_with_windows_events`
-    /// function won't update this as it is not a `WindowEvent`.
     pub fn mouse_diff(&self) -> (f32, f32) {
         if let Some(current_input) = &self.current {
             if let Some(diff) = current_input.mouse_diff {

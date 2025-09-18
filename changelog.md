@@ -4,13 +4,20 @@ This changelog is written with the goal of helping you through breaking changes 
 
 ## 0.17
 
-Upgraded to winit 0.30.
-Winit 0.30 overhauled the event loop -- now everything occurs through the ApplicationHandler.
-Now rather than simply calling WinitInputHandler.update(), you have to call 4 different functions: .process_window_event(), .process_device_event(), .process_new_events(), and .process_about_to_wait(), each in the corresponding function within ApplicationHandler.
+### Upgraded to winit 0.30
+
+Winit 0.30 overhauled the event loop -- now everything occurs through the [ApplicationHandler](https://docs.rs/winit/latest/winit/application/trait.ApplicationHandler.html).
+Now rather than simply calling `WinitInputHandler.update()`, you have to call 4 different functions: `.process_window_event()`, `.process_device_event()`, `.step()`, and `.end_step()`, each in the corresponding function within ApplicationHandler.
 
 The recommendations this crate gives about where to render and run your application logic have also been updated to match new guidance.
-As update() has been removed, it no longer returns true when you should run application logic. Instead, run your application logic _after_ calling .process_about_to_wait() in ApplicationHandler::about_to_wait().
-Run rendering code in ApplicationHandler::window_event() only when .process_window_event() returns true, indicating it received a RequestedRedraw event. It doesn't care about which window was requested to be redrawn, but if you do, you'll have to handle it yourself. If you want to render every frame, remember to call Window::request_redraw() in ApplicationHandler::about_to_wait() every time.
+As `update()` has been removed, it no longer returns true when you should run application logic. Instead, run your application logic _after_ calling .`process_about_to_wait()` in `ApplicationHandler::about_to_wait()`.
+Run rendering code in `ApplicationHandler::window_event()` only when `.process_window_event()` returns true, indicating it received a `RequestedRedraw` event. It doesn't care about which window was requested to be redrawn, but if you do, you'll have to handle it yourself. If you want to render every frame, remember to call `Window::request_redraw()` in `ApplicationHandler::about_to_wait()` every time.
+
+## `step_with_window_events` removed
+
+It seemed kind of broken since it doesnt process device events.
+And winit 0.30 makes this issue even worse.
+Something similar could be reintroduced in the future with more thought put into it.
 
 ## 0.16
 
