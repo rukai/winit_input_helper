@@ -121,8 +121,8 @@ impl WinitInputHelper {
         }
     }
 
-    // Call every time ApplicationHandler.about_to_wait() is called.
-    // Update your application logic _after_ you call this function.
+    /// Call every time ApplicationHandler.about_to_wait() is called.
+    /// Update your application logic _after_ you call this function.
     pub fn end_step(&mut self) {
         self.step_duration = self.step_start.map(|start| start.elapsed());
         self.step_start = Some(Instant::now());
